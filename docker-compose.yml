@@ -1,0 +1,15 @@
+
+services:
+  ingestion1:
+    build:
+      context: "/ingestion-service/"
+    ports:
+      - "7001:7001"
+    command: ['datalake', 'datalake/log.log']
+
+  ingestion2:
+    build:
+      context: "/ingestion-service/"
+    ports:
+      - "7002:7001"
+    command: ['datalake', 'datalake/log.log']
