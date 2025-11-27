@@ -5,10 +5,8 @@ services:
     image: ingestion-service:latest
     ports:
       - "7001:7001"
-    command: ['datalake', 'datalake/log.log']
+    command: ['datalake', 'logs/log.log']
+    volumes:
+      - ./mnt/datalake:/app/datalake
+      - ./mnt/logs:/app/logs
 
-  ingestion2:
-    image: ingestion-service:latest
-    ports:
-      - "7002:7001"
-    command: ['datalake', 'datalake/log.log']
