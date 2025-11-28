@@ -1,5 +1,6 @@
 package com.guanchedata.infrastructure.adapters.apiservices;
 
+import com.guanchedata.infrastructure.adapters.activemq.ActiveMQBookIngestedNotifier;
 import com.guanchedata.infrastructure.adapters.bookprovider.GutenbergConnection;
 import com.guanchedata.infrastructure.adapters.bookprovider.GutenbergFetch;
 import com.guanchedata.infrastructure.ports.BookDownloadStatusStore;
@@ -15,10 +16,12 @@ public class IngestBookService implements BookDownloader {
     private static final Logger log = LoggerFactory.getLogger(IngestBookService.class);
     private final BookDownloadStatusStore bookDownloadLog;
     private final BookStorage storageDate;
+    private final ActiveMQBookIngestedNotifier bookIngestedNotifier;
 
-    public IngestBookService(BookStorage storageDate, BookDownloadStatusStore bookDownloadLog) {
+    public IngestBookService(BookStorage storageDate, BookDownloadStatusStore bookDownloadLog, ActiveMQBookIngestedNotifier bookIngestedNotifier) {
         this.storageDate = storageDate;
         this.bookDownloadLog = bookDownloadLog;
+        this.bookIngestedNotifier = bookIngestedNotifier;
     }
 
     @Override
@@ -32,7 +35,7 @@ public class IngestBookService implements BookDownloader {
             String response = fetchBook(bookId);
             Path savedPath = storageDate.save(bookId, response);
             bookDownloadLog.registerDownload(bookId);
-            // activeMQ post?
+            this.bookIngestedNotifier.notify(bookId);
             return successResponse(bookId, savedPath);
         } catch (Exception e) {
             return errorResponse(bookId, e);

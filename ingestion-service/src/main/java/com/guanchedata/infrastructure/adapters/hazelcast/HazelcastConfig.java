@@ -22,7 +22,7 @@ public class HazelcastConfig {
 
         join.getTcpIpConfig()
                 .addMember(System.getenv("PUBLIC_IP"))
-                .addMember("")
+                //.addMember("")
                 .setEnabled(true);
 
         return Hazelcast.newHazelcastInstance(config);

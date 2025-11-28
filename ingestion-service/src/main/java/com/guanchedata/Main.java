@@ -1,6 +1,7 @@
 package com.guanchedata;
 
 import com.guanchedata.application.usecases.ingestionservice.BookProviderController;
+import com.guanchedata.infrastructure.adapters.activemq.ActiveMQBookIngestedNotifier;
 import com.guanchedata.infrastructure.adapters.apiservices.BookStatusService;
 import com.guanchedata.infrastructure.adapters.apiservices.IngestBookService;
 import com.guanchedata.infrastructure.adapters.apiservices.ListBooksService;
@@ -22,7 +23,7 @@ public class Main {
         BookStorage storageDate = new BookStorageDate(pathGenerator, separator, new HazelcastReplicationManager("SearchEngine", Integer.parseInt(System.getenv("REPLICATION_FACTOR"))));
         BookDownloadStatusStore bookDownloadLog = new BookDownloadLog(args[1]);
 
-        BookDownloader ingestBookService = new IngestBookService(storageDate, bookDownloadLog);
+        BookDownloader ingestBookService = new IngestBookService(storageDate, bookDownloadLog, new ActiveMQBookIngestedNotifier(System.getenv("BROKER_URL")));
         BookListProvider listBooksService = new ListBooksService(bookDownloadLog);
         BookStatusProvider bookStatusService = new BookStatusService(bookDownloadLog);
 
