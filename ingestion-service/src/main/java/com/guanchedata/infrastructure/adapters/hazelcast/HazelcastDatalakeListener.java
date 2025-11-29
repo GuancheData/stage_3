@@ -39,7 +39,7 @@ public class HazelcastDatalakeListener extends AbstractEntryListener<Integer, Re
         if (replicated.getSourceNode().equals(nodeInfoProvider.getNodeId())) return;
 
         IMap<Integer, Integer> replicaCount = hazelcast.getMap("replication-count");
-        int current = replicaCount.getOrDefault(bookId, 0);
+        int current = replicaCount.getOrDefault(bookId, 1);
         if (current >= replicationFactor) return;
         replicaCount.put(bookId, current + 1);
 
