@@ -24,6 +24,7 @@ public class HazelcastReplicationExecuter implements ReplicationExecuter {
         try {
             MultiMap<Integer, ReplicatedBook> datalake = hazelcast.getMultiMap("datalake");
             datalake.put(bookId, new ReplicatedBook(header, body, nodeInfoProvider.getNodeId()));
+            System.out.println("Current MultiMap keys: " + datalake.keySet());
         } finally {
             lock.unlock();
         }

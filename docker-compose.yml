@@ -23,7 +23,7 @@ services:
     container_name: activemq
     restart: always
     ports:
-    - "61616:61616" # JMS protocol port
+    - "62616:61616" # JMS protocol port
     - "8161:8161" # Web console (http://localhost:8161)
     environment:
     - ACTIVEMQ_ADMIN_LOGIN=admin

@@ -19,6 +19,15 @@ public class HazelcastReplicationManager {
         this.hazelcastReplicationExecuter = new HazelcastReplicationExecuter(this.hazelcastInstance, this.nodeInfoProvider);
     }
 
+
+    public HazelcastInstance getHazelcastInstance() {
+        return this.hazelcastInstance;
+    }
+
+    public NodeInfoProvider getNodeInfoProvider() {
+        return this.nodeInfoProvider;
+    }
+
     public HazelcastReplicationExecuter getHazelcastReplicationExecuter() {
         return hazelcastReplicationExecuter;
     }

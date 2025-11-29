@@ -8,19 +8,24 @@ import com.guanchedata.infrastructure.adapters.apiservices.ListBooksService;
 import com.guanchedata.infrastructure.adapters.bookprovider.BookDownloadLog;
 import com.guanchedata.infrastructure.adapters.bookprovider.BookStorageDate;
 import com.guanchedata.infrastructure.adapters.bookprovider.GutenbergBookContentSeparator;
+import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastDatalakeRecovery;
 import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastReplicationManager;
 import com.guanchedata.infrastructure.ports.*;
 import com.guanchedata.util.DateTimePathGenerator;
 import io.javalin.Javalin;
 
+import java.io.IOException;
+
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         System.out.println(args[0]);
 
+        HazelcastReplicationManager hazelcastManager = new HazelcastReplicationManager("SearchEngine", Integer.parseInt(System.getenv("REPLICATION_FACTOR")));
+
         PathGenerator pathGenerator = new DateTimePathGenerator(args[0]);
         GutenbergBookContentSeparator separator = new GutenbergBookContentSeparator();
-        BookStorage storageDate = new BookStorageDate(pathGenerator, separator, new HazelcastReplicationManager("SearchEngine", Integer.parseInt(System.getenv("REPLICATION_FACTOR"))));
+        BookStorage storageDate = new BookStorageDate(pathGenerator, separator, hazelcastManager);
         BookDownloadStatusStore bookDownloadLog = new BookDownloadLog(args[1]);
 
         BookDownloader ingestBookService = new IngestBookService(storageDate, bookDownloadLog, new ActiveMQBookIngestedNotifier(System.getenv("BROKER_URL")));
@@ -32,6 +37,11 @@ public class Main {
                 listBooksService,
                 bookStatusService
         );
+
+        HazelcastDatalakeRecovery recovery = new HazelcastDatalakeRecovery(hazelcastManager.getHazelcastInstance(), hazelcastManager.getNodeInfoProvider(),
+                Integer.parseInt(System.getenv("REPLICATION_FACTOR")));
+
+        recovery.reloadMemoryFromDisk(args[0]);
 
         Javalin app = Javalin.create(config -> {
             config.http.defaultContentType = "application/json";
