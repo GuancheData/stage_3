@@ -1,10 +1,10 @@
 package com.guanchedata.infrastructure.adapters.hazelcast;
 
+import com.guanchedata.infrastructure.adapters.activemq.ActiveMQBookIngestedNotifier;
 import com.guanchedata.model.NodeInfoProvider;
 import com.guanchedata.model.ReplicatedBook;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
-import com.hazelcast.map.IMap;
 import com.hazelcast.multimap.MultiMap;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,10 +15,12 @@ public class HazelcastDatalakeRecovery {
 
     private final HazelcastInstance hazelcast;
     private final NodeInfoProvider nodeInfoProvider;
+    private final ActiveMQBookIngestedNotifier notifier;
 
-    public HazelcastDatalakeRecovery(HazelcastInstance hazelcast, NodeInfoProvider nodeInfoProvider) {
+    public HazelcastDatalakeRecovery(HazelcastInstance hazelcast, NodeInfoProvider nodeInfoProvider, ActiveMQBookIngestedNotifier notifier) {
         this.hazelcast = hazelcast;
         this.nodeInfoProvider = nodeInfoProvider;
+        this.notifier = notifier;
     }
 
     public void reloadMemoryFromDisk(String dataVolumePath) throws IOException {
@@ -51,6 +53,8 @@ public class HazelcastDatalakeRecovery {
                         } finally {
                             lock.unlock();
                         }
+
+                        notifier.notify(bookId);
 
                     } catch (IOException e) {
                         throw new RuntimeException("Error reading from disk: " + bodyPath, e);

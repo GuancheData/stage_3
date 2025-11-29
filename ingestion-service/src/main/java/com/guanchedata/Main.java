@@ -23,13 +23,14 @@ public class Main {
         System.out.println(args[0]);
 
         HazelcastReplicationManager hazelcastManager = new HazelcastReplicationManager("SearchEngine", Integer.parseInt(System.getenv("REPLICATION_FACTOR")));
+        ActiveMQBookIngestedNotifier notifier =  new ActiveMQBookIngestedNotifier(System.getenv("BROKER_URL"));
 
         PathGenerator pathGenerator = new DateTimePathGenerator(args[0]);
         GutenbergBookContentSeparator separator = new GutenbergBookContentSeparator();
         BookStorage storageDate = new BookStorageDate(pathGenerator, separator, hazelcastManager);
         BookDownloadStatusStore bookDownloadLog = new BookDownloadLog(args[1]);
 
-        BookDownloader ingestBookService = new IngestBookService(storageDate, bookDownloadLog, new ActiveMQBookIngestedNotifier(System.getenv("BROKER_URL")));
+        BookDownloader ingestBookService = new IngestBookService(storageDate, bookDownloadLog, notifier);
         BookListProvider listBooksService = new ListBooksService(bookDownloadLog);
         BookStatusProvider bookStatusService = new BookStatusService(bookDownloadLog);
 
@@ -41,7 +42,7 @@ public class Main {
 
         BookIngestionPeriodicExecutor bookIngestionExecutor = new BookIngestionPeriodicExecutor(hazelcastManager.getHazelcastInstance(),ingestBookService);
 
-        HazelcastDatalakeRecovery recovery = new HazelcastDatalakeRecovery(hazelcastManager.getHazelcastInstance(), hazelcastManager.getNodeInfoProvider());
+        HazelcastDatalakeRecovery recovery = new HazelcastDatalakeRecovery(hazelcastManager.getHazelcastInstance(), hazelcastManager.getNodeInfoProvider(), notifier);
         recovery.reloadMemoryFromDisk(args[0]);
 
         Javalin app = Javalin.create(config -> {
