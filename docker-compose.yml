@@ -1,0 +1,36 @@
+services:
+  ingestion1:
+    build:
+      context: ./ingestion-service/
+    image: ingestion-service:latest
+    ports:
+      - "5701:5701"
+    command: ['datalake', 'logs/log.log']
+    environment:
+      PUBLIC_IP: "" # IP
+      REPLICATION_FACTOR: 3
+      BROKER_URL: tcp://activemq:61616
+    volumes:
+      - ./mnt/datalake:/app/datalake
+      - ./mnt/logs:/app/logs
+    depends_on:
+      - activemq
+    networks:
+      - search_net
+
+  activemq:
+    image: rmohr/activemq:latest
+    container_name: activemq
+    restart: always
+    ports:
+    - "62616:61616" # JMS protocol port
+    - "8161:8161" # Web console (http://localhost:8161)
+    environment:
+    - ACTIVEMQ_ADMIN_LOGIN=admin
+    - ACTIVEMQ_ADMIN_PASSWORD=admin
+    networks:
+    - search_net
+
+networks:
+  search_net:
+    driver: bridge
