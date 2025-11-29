@@ -15,18 +15,14 @@ public class HazelcastDatalakeRecovery {
 
     private final HazelcastInstance hazelcast;
     private final NodeInfoProvider nodeInfoProvider;
-    private final int replicationFactor;
 
-    public HazelcastDatalakeRecovery(HazelcastInstance hazelcast, NodeInfoProvider nodeInfoProvider, int replicationFactor) {
+    public HazelcastDatalakeRecovery(HazelcastInstance hazelcast, NodeInfoProvider nodeInfoProvider) {
         this.hazelcast = hazelcast;
         this.nodeInfoProvider = nodeInfoProvider;
-        this.replicationFactor = replicationFactor;
     }
 
     public void reloadMemoryFromDisk(String dataVolumePath) throws IOException {
         Path datalakePath = Paths.get(dataVolumePath);
-
-        IMap<Integer, Integer> replicaCount = hazelcast.getMap("replication-count");
         MultiMap<Integer, ReplicatedBook> datalake = hazelcast.getMultiMap("datalake");
 
         if (!Files.exists(datalakePath) || !Files.isDirectory(datalakePath)) {
@@ -38,27 +34,28 @@ public class HazelcastDatalakeRecovery {
                 .forEach(bodyPath -> {
                     try {
                         int bookId = extractBookId(bodyPath.getFileName().toString());
-                        int currentReplicas = replicaCount.getOrDefault(bookId, 0);
 
-                        if (currentReplicas < replicationFactor) {
+                        FencedLock lock = hazelcast.getCPSubsystem().getLock("lock:book:" + bookId);
+                        lock.lock();
+                        try {
+                            if (datalake.containsKey(bookId)) {
+                                System.out.println("Book " + bookId + " already in the in-memory datalake. Skip.");
+                                return;
+                            }
+
                             Path headerPath = bodyPath.getParent().resolve(bookId + "_header.txt");
                             String header = Files.readString(headerPath);
                             String body = Files.readString(bodyPath);
+                            datalake.put(bookId, new ReplicatedBook(header, body, nodeInfoProvider.getNodeId()));
 
-                            FencedLock lock = hazelcast.getCPSubsystem().getLock("lock:book:" + bookId);
-                            lock.lock();
-                            try {
-                                datalake.put(bookId, new ReplicatedBook(header, body, nodeInfoProvider.getNodeId()));
-                                replicaCount.put(bookId, currentReplicas + 1);
-                            } finally {
-                                lock.unlock();
-                            }
+                        } finally {
+                            lock.unlock();
                         }
+
                     } catch (IOException e) {
                         throw new RuntimeException("Error reading from disk: " + bodyPath, e);
                     }
                 });
-
     }
 
     private int extractBookId(String filename) {

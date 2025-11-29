@@ -15,7 +15,6 @@ public class HazelcastReplicationManager {
         this.hazelcastInstance = new HazelcastConfig().initHazelcast(clusterName); // CREATE HAZELCAST MEMBER
         this.hazelcastDatalakeListener = new HazelcastDatalakeListener(this.hazelcastInstance,this.nodeInfoProvider,replicationFactor);
         this.hazelcastDatalakeListener.registerListener();
-
         this.hazelcastReplicationExecuter = new HazelcastReplicationExecuter(this.hazelcastInstance, this.nodeInfoProvider);
     }
 

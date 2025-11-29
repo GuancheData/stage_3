@@ -38,9 +38,7 @@ public class Main {
                 bookStatusService
         );
 
-        HazelcastDatalakeRecovery recovery = new HazelcastDatalakeRecovery(hazelcastManager.getHazelcastInstance(), hazelcastManager.getNodeInfoProvider(),
-                Integer.parseInt(System.getenv("REPLICATION_FACTOR")));
-
+        HazelcastDatalakeRecovery recovery = new HazelcastDatalakeRecovery(hazelcastManager.getHazelcastInstance(), hazelcastManager.getNodeInfoProvider());
         recovery.reloadMemoryFromDisk(args[0]);
 
         Javalin app = Javalin.create(config -> {
