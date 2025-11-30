@@ -8,13 +8,11 @@ services:
     command: ['datalake', 'logs/log.log']
     environment:
       PUBLIC_IP: "" # IP
-      REPLICATION_FACTOR: 3
-      BROKER_URL: tcp://activemq:61616
+      REPLICATION_FACTOR: 2
+      BROKER_URL: tcp://BROKER_URL:61616
     volumes:
       - ./mnt/datalake:/app/datalake
       - ./mnt/logs:/app/logs
-    depends_on:
-      - activemq
     networks:
       - search_net
 
@@ -30,6 +28,8 @@ services:
     - ACTIVEMQ_ADMIN_PASSWORD=admin
     networks:
     - search_net
+    profiles:
+      - broker
 
 networks:
   search_net:
