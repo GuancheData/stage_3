@@ -26,7 +26,7 @@ public class BookIngestionPeriodicExecutor {
 
     public void startPeriodicExecution() {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleWithFixedDelay(this::execute, 0, 10, TimeUnit.SECONDS);
+        scheduler.scheduleWithFixedDelay(this::execute, 0, 5, TimeUnit.SECONDS);
     }
 
     public void execute() {
@@ -44,7 +44,7 @@ public class BookIngestionPeriodicExecutor {
 
     public void setupBookQueue() {
         if (!queueInitialized.compareAndSet(false, true)) {
-            System.out.println("Queue ya inicializada");
+            System.out.println("Queue initalized");
             return;
         }
 
@@ -55,7 +55,7 @@ public class BookIngestionPeriodicExecutor {
     }
 
     private void populateQueueAsync(int maxBookId) {
-        System.out.println("Iniciando población asíncrona de queue desde " + (maxBookId + 1));
+        System.out.println("Initializing queue from " + (maxBookId + 1));
 
         int batchSize = 1000;
         int added = 0;
@@ -74,23 +74,19 @@ public class BookIngestionPeriodicExecutor {
             }
 
             if (!allAdded) {
-                System.out.println("Queue llena en book " + i + ", pausando...");
-                try { Thread.sleep(5000); } catch (InterruptedException e) {} // Espera 5s
+                System.out.println("Queue full in book " + i + ", pausing...");
+                try { Thread.sleep(5000); } catch (InterruptedException e) {}
                 continue;
             }
 
-            // Stats cada 10k
             if (added % 10000 == 0) {
                 long elapsed = System.currentTimeMillis() - start;
                 double rate = added * 1000.0 / elapsed;
-                System.out.printf("Queue: %d/%d añadidos (%.1f/sec)%n", added, 100000-maxBookId, rate);
+                System.out.printf("Queue: %d/%d added (%.1f/sec)%n", added, 100000-maxBookId, rate);
             }
         }
 
-        System.out.printf("Queue COMPLETA: %d libros en %.1fs (%.1f/sec)%n",
+            System.out.printf("Queue COMPLETED: %d books in %.1fs (%.1f/sec)%n",
                 added, (System.currentTimeMillis() - start) / 1000.0, added * 1000.0 / (System.currentTimeMillis() - start));
     }
 }
-
-
-

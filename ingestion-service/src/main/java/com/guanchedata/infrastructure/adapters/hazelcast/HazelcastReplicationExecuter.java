@@ -8,6 +8,8 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.multimap.MultiMap;
 
+import java.util.List;
+
 public class HazelcastReplicationExecuter implements ReplicationExecuter {
 
     private final HazelcastInstance hazelcast;
@@ -34,7 +36,10 @@ public class HazelcastReplicationExecuter implements ReplicationExecuter {
             for (int i = 1; i < replicationFactor; i++) {
                 booksToBeReplicated.put(new ReplicatedBook(bookId, this.nodeInfoProvider.getNodeId()));
             }
-            System.out.println(booksToBeReplicated);
+            List<ReplicatedBook> snapshot = List.copyOf(booksToBeReplicated);
+            for (ReplicatedBook book: snapshot){
+                System.out.println(book.getId());
+            }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {

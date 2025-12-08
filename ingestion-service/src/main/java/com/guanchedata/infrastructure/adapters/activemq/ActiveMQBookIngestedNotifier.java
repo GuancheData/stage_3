@@ -19,7 +19,7 @@ public class ActiveMQBookIngestedNotifier implements BookIngestedNotifier {
         try (Connection connection = factory.createConnection()) {
             connection.start();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Destination queue = session.createQueue("documents.ingested");
+            Destination queue = session.createTopic("documents.ingested");
             MessageProducer producer = session.createProducer(queue);
 
             Gson gson = new Gson();

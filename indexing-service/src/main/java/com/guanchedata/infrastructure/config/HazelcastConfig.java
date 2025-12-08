@@ -6,6 +6,8 @@ import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
+import java.util.Arrays;
+
 public class HazelcastConfig {
 
     public HazelcastInstance initHazelcast(String clusterName) {
@@ -25,7 +27,7 @@ public class HazelcastConfig {
         join.getMulticastConfig().setEnabled(false);
         join.getAutoDetectionConfig().setEnabled(false);
         join.getTcpIpConfig()
-                //.setMembers(Arrays.asList()))
+                //.setMembers(Arrays.asList())
                 .setEnabled(true);
 
         config.setProperty("hazelcast.wait.seconds.before.join", "0");
