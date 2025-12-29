@@ -1,11 +1,9 @@
 package com.guanchedata.infrastructure.adapters.hazelcast;
 
-import com.guanchedata.infrastructure.adapters.apiservices.IngestBookService;
 import com.guanchedata.infrastructure.adapters.bookprovider.BookStorageDate;
 import com.guanchedata.model.NodeInfoProvider;
 import com.guanchedata.model.ReplicatedBook;
-import com.guanchedata.util.DateTimePathGenerator;
-import com.guanchedata.util.GutenbergBookDownloader;
+import com.guanchedata.util.GutenbergBookProvider;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
@@ -17,18 +15,16 @@ public class HazelcastDatalakeListener {
 
     private final NodeInfoProvider nodeInfoProvider;
     private final HazelcastInstance hazelcast;
-    //private final IngestBookService ingestBookService;
-    private final GutenbergBookDownloader bookDownloader;
+    private final GutenbergBookProvider bookProvider;
     private final BookStorageDate bookStorageDate;
 
     public HazelcastDatalakeListener(HazelcastInstance hazelcast,
                                      NodeInfoProvider nodeInfoProvider,
-                                     GutenbergBookDownloader bookDownloader,
+                                     GutenbergBookProvider bookProvider,
                                      BookStorageDate bookStorageDate) {
         this.hazelcast = hazelcast;
         this.nodeInfoProvider = nodeInfoProvider;
-        //this.ingestBookService = ingestBookService;
-        this.bookDownloader = bookDownloader;
+        this.bookProvider = bookProvider;
         this.bookStorageDate = bookStorageDate;
     }
 
@@ -56,7 +52,7 @@ public class HazelcastDatalakeListener {
 
     private void saveRetrievedBook(int bookId) {
         try {
-            this.bookStorageDate.save(bookId,this.bookDownloader.fetchBook(bookId));
+            this.bookStorageDate.save(bookId,this.bookProvider.getBook(bookId));
             addBookLocation(bookId);
         } catch (Exception e) {
             throw new RuntimeException(e);

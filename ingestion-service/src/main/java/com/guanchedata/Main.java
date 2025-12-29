@@ -8,10 +8,10 @@ import com.guanchedata.infrastructure.adapters.apiservices.IngestBookService;
 import com.guanchedata.infrastructure.adapters.apiservices.ListBooksService;
 import com.guanchedata.infrastructure.adapters.bookprovider.*;
 import com.guanchedata.infrastructure.adapters.hazelcast.DatalakeRecoveryNotifier;
-import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastReplicationManager;
+import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastManager;
 import com.guanchedata.infrastructure.ports.*;
 import com.guanchedata.util.DateTimePathGenerator;
-import com.guanchedata.util.GutenbergBookDownloader;
+import com.guanchedata.util.GutenbergBookProvider;
 import io.javalin.Javalin;
 
 import java.io.IOException;
@@ -19,19 +19,15 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        System.out.println(args[0]);
-
         BookDownloadStatusStore bookDownloadLog = new BookDownloadLog(args[1]);
         PathGenerator pathGenerator = new DateTimePathGenerator(args[0]);
-        GutenbergBookContentSeparator separator = new GutenbergBookContentSeparator();
 
-
-        BookStorageDate storageDate = new BookStorageDate(pathGenerator, separator);
-        GutenbergBookDownloader gutenbergBookDownloader = new GutenbergBookDownloader(new GutenbergFetch(), new GutenbergConnection());
+        BookStorageDate storageDate = new BookStorageDate(pathGenerator);
+        GutenbergBookProvider gutenbergBookProvider = new GutenbergBookProvider(new GutenbergFetch(), new GutenbergConnection(), new GutenbergBookContentSeparator());
 
         ActiveMQBookIngestedNotifier notifier =  new ActiveMQBookIngestedNotifier(System.getenv("BROKER_URL"));
-        HazelcastReplicationManager hazelcastManager = new HazelcastReplicationManager("SearchEngine", Integer.parseInt(System.getenv("REPLICATION_FACTOR")), gutenbergBookDownloader, storageDate);
-        BookDownloader ingestBookService = new IngestBookService(storageDate, bookDownloadLog, notifier, hazelcastManager, gutenbergBookDownloader);
+        HazelcastManager hazelcastManager = new HazelcastManager("SearchEngine", Integer.parseInt(System.getenv("REPLICATION_FACTOR")), gutenbergBookProvider, storageDate);
+        BookDownloader ingestBookService = new IngestBookService(storageDate, bookDownloadLog, notifier, hazelcastManager, gutenbergBookProvider);
 
 
         BookListProvider listBooksService = new ListBooksService(bookDownloadLog);

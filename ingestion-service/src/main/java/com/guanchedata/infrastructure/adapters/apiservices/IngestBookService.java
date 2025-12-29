@@ -1,13 +1,11 @@
 package com.guanchedata.infrastructure.adapters.apiservices;
 
 import com.guanchedata.infrastructure.adapters.activemq.ActiveMQBookIngestedNotifier;
-import com.guanchedata.infrastructure.adapters.bookprovider.GutenbergConnection;
-import com.guanchedata.infrastructure.adapters.bookprovider.GutenbergFetch;
-import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastReplicationManager;
+import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastManager;
 import com.guanchedata.infrastructure.ports.BookDownloadStatusStore;
 import com.guanchedata.infrastructure.ports.BookDownloader;
 import com.guanchedata.infrastructure.ports.BookStorage;
-import com.guanchedata.util.GutenbergBookDownloader;
+import com.guanchedata.util.GutenbergBookProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,28 +17,29 @@ public class IngestBookService implements BookDownloader {
     private final BookDownloadStatusStore bookDownloadLog;
     private final BookStorage storageDate;
     private final ActiveMQBookIngestedNotifier bookIngestedNotifier;
-    private final HazelcastReplicationManager hazelcastReplicationManager;
-    private final GutenbergBookDownloader gutenbergBookDownloader;
+    private final HazelcastManager hazelcastManager;
+    private final GutenbergBookProvider gutenbergBookProvider;
 
-    public IngestBookService(BookStorage storageDate, BookDownloadStatusStore bookDownloadLog, ActiveMQBookIngestedNotifier bookIngestedNotifier, HazelcastReplicationManager hazelcastReplicationManager, GutenbergBookDownloader gutenbergBookDownloader) {
+    public IngestBookService(BookStorage storageDate, BookDownloadStatusStore bookDownloadLog, ActiveMQBookIngestedNotifier bookIngestedNotifier, HazelcastManager hazelcastManager, GutenbergBookProvider gutenbergBookDownloader) {
         this.storageDate = storageDate;
         this.bookDownloadLog = bookDownloadLog;
         this.bookIngestedNotifier = bookIngestedNotifier;
-        this.hazelcastReplicationManager = hazelcastReplicationManager;
-        this.gutenbergBookDownloader = gutenbergBookDownloader;
+        this.hazelcastManager = hazelcastManager;
+        this.gutenbergBookProvider = gutenbergBookDownloader;
     }
 
     @Override
     public Map<String, Object> ingest(int bookId) {
         log.info("ingest() - Start processing bookId={}", bookId);
-
         try {
             if (bookDownloadLog.isDownloaded(bookId)) {
                 return alreadyDownloadedResponse(bookId);
             }
-            String response = this.gutenbergBookDownloader.fetchBook(bookId);
-            Path savedPath = storageDate.save(bookId, response);
-            this.hazelcastReplicationManager.getHazelcastReplicationExecuter().execute(bookId);
+            String[] separatedContent = this.gutenbergBookProvider.getBook(bookId);
+            // get separated content from book
+            Path savedPath = storageDate.save(bookId, separatedContent); // save to disk
+            this.hazelcastManager.uploadToMemory(bookId, separatedContent);
+            this.hazelcastManager.getHazelcastReplicationExecuter().execute(bookId); // start background replication
             bookDownloadLog.registerDownload(bookId);
             this.bookIngestedNotifier.notify(bookId);
             return successResponse(bookId, savedPath);

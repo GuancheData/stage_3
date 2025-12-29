@@ -11,7 +11,7 @@ services:
       PUBLIC_IP: "" #IP
       HZ_PORT: "5701"
       REPLICATION_FACTOR: 3
-      INDEXING_BUFFER_FACTOR: 0
+      INDEXING_BUFFER_FACTOR: 10
       BROKER_URL: tcp://xxx:61616
       HAZELCAST_CLUSTER_NAME: SearchEngine
     volumes:

@@ -35,7 +35,7 @@ public class BookIngestionPeriodicExecutor {
         System.out.print("Indexers alive: ");
         System.out.println(this.hazelcast.getCluster().getMembers().stream().filter(m -> "indexer".equals(m.getAttribute("role"))).count());
         MultiMap<Integer,String> datalake = this.hazelcast.getMultiMap("datalake");
-        if (datalake.size() < Integer.parseInt(System.getenv("INDEXING_BUFFER_FACTOR")) * this.hazelcast.getCluster().getMembers().stream().filter(m -> "indexer".equals(m.getAttribute("role"))).count()){
+        if (datalake.keySet().size() < Integer.parseInt(System.getenv("INDEXING_BUFFER_FACTOR")) * this.hazelcast.getCluster().getMembers().stream().filter(m -> "indexer".equals(m.getAttribute("role"))).count()){
             try {
                 Integer bookId = queue.poll(100, TimeUnit.MILLISECONDS);
                 if (bookId != null) {

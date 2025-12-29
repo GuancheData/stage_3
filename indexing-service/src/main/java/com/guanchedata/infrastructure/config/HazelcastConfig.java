@@ -30,7 +30,7 @@ public class HazelcastConfig {
         join.getMulticastConfig().setEnabled(false);
         join.getAutoDetectionConfig().setEnabled(false);
         join.getTcpIpConfig()
-                //.setMembers(Arrays.asList())
+                //.setMembers(Arrays.asList(""))
                 .setEnabled(true);
 
         config.setProperty("hazelcast.wait.seconds.before.join", "0");
