@@ -11,7 +11,8 @@ services:
       PUBLIC_IP: "" #IP
       HZ_PORT: "5701"
       REPLICATION_FACTOR: 3
-      BROKER_URL: tcp://BROKER_CENTRAL_NODE_IP:61616
+      INDEXING_BUFFER_FACTOR: 0
+      BROKER_URL: tcp://xxx:61616
       HAZELCAST_CLUSTER_NAME: SearchEngine
     volumes:
       - ./mnt/datalake:/app/datalake
@@ -29,13 +30,29 @@ services:
     environment:
       PUBLIC_IP: "" #IP
       HZ_PORT: "5702"
-      BROKER_URL: tcp://BROKER_CENTRAL_NODE_IP:61616
+      BROKER_URL: tcp://xxx:61616
       HAZELCAST_CLUSTER_NAME: SearchEngine
     depends_on:
       - ingestion1
     networks:
       - search_net
 
+  indexing2:
+    build:
+      context: ./indexing-service
+    image: indexing-service:latest
+    container_name: indexing2
+    ports:
+      - "5703:5703"
+    environment:
+      PUBLIC_IP: "" #IP
+      HZ_PORT: "5703"
+      BROKER_URL: tcp://xxx:61616
+      HAZELCAST_CLUSTER_NAME: SearchEngine
+    depends_on:
+      - ingestion1
+    networks:
+      - search_net
 
   activemq:
     image: rmohr/activemq:latest

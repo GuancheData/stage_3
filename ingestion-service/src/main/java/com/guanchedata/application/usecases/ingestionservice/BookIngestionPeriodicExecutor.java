@@ -2,10 +2,12 @@ package com.guanchedata.application.usecases.ingestionservice;
 
 import com.guanchedata.infrastructure.ports.BookDownloader;
 import com.guanchedata.model.NodeInfoProvider;
+import com.hazelcast.cluster.Member;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.multimap.MultiMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,15 +32,20 @@ public class BookIngestionPeriodicExecutor {
     }
 
     public void execute() {
-        try {
-            Integer bookId = queue.poll(100, TimeUnit.MILLISECONDS);
-            if (bookId != null) {
-                System.out.println("\nIngesting book: " + bookId);
-                Map<String, Object> result = ingestBookService.ingest(bookId);
-                System.out.println("Result: " + result);
+        System.out.print("Indexers alive: ");
+        System.out.println(this.hazelcast.getCluster().getMembers().stream().filter(m -> "indexer".equals(m.getAttribute("role"))).count());
+        MultiMap<Integer,String> datalake = this.hazelcast.getMultiMap("datalake");
+        if (datalake.size() < Integer.parseInt(System.getenv("INDEXING_BUFFER_FACTOR")) * this.hazelcast.getCluster().getMembers().stream().filter(m -> "indexer".equals(m.getAttribute("role"))).count()){
+            try {
+                Integer bookId = queue.poll(100, TimeUnit.MILLISECONDS);
+                if (bookId != null) {
+                    System.out.println("\nIngesting book: " + bookId);
+                    Map<String, Object> result = ingestBookService.ingest(bookId);
+                    System.out.println("Result: " + result);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

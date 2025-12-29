@@ -14,6 +14,9 @@ public class HazelcastConfig {
         Config config = new Config();
         config.setClusterName(clusterName);
 
+        config.getMemberAttributeConfig()
+                .setAttribute("role", "indexer");
+
         String publicIp = System.getenv("PUBLIC_IP");
         String hzPort   = System.getenv("HZ_PORT");
 
