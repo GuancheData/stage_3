@@ -1,5 +1,6 @@
 package com.guanchedata.infrastructure.adapters.apiservices;
 
+import com.guanchedata.infrastructure.adapters.metadata.HazelcastMetadataStore;
 import com.guanchedata.infrastructure.ports.BookStore;
 import com.guanchedata.infrastructure.ports.IndexStore;
 import com.guanchedata.infrastructure.ports.Tokenizer;
@@ -15,11 +16,13 @@ public class IndexingService {
     private final IndexStore indexStore;
     private final Tokenizer tokenizer;
     private final BookStore bookStore;
+    private final HazelcastMetadataStore hazelcastMetadataStore;
 
-    public IndexingService(IndexStore indexStore, Tokenizer tokenizer, BookStore bookStore) {
+    public IndexingService(IndexStore indexStore, Tokenizer tokenizer, BookStore bookStore, HazelcastMetadataStore hazelcastMetadataStore) {
         this.indexStore = indexStore;
         this.tokenizer = tokenizer;
         this.bookStore = bookStore;
+        this.hazelcastMetadataStore = hazelcastMetadataStore;
     }
 
     public void indexDocument(int documentId) {
@@ -32,7 +35,7 @@ public class IndexingService {
             // inverted index method
             int tokenCount = generateInvertedIndex(content[1], documentId);
             // metadata method
-
+            this.hazelcastMetadataStore.saveMetadata(documentId, content[0]);
             //System.out.println("Done indexing for document: " + documentId + ". Token count: " + tokenCount);
             log.info("Done indexing for document: {}. Token count: {}\n", documentId, tokenCount);
 
