@@ -1,68 +1,66 @@
 package com.guanchedata.infrastructure.adapters.hazelcast;
 
+import com.guanchedata.infrastructure.adapters.bookprovider.BookStorageDate;
 import com.guanchedata.model.NodeInfoProvider;
-import com.guanchedata.model.ReplicatedBook;
-import com.guanchedata.util.DateTimePathGenerator;
-import com.hazelcast.core.EntryEvent;
+import com.guanchedata.model.BookReplicationCommand;
+import com.guanchedata.util.GutenbergBookProvider;
+import com.hazelcast.collection.IQueue;
+import com.hazelcast.collection.ItemEvent;
+import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.multimap.MultiMap;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-public class HazelcastDatalakeListener extends AbstractEntryListener<Integer, ReplicatedBook> {
+public class HazelcastDatalakeListener {
 
     private final NodeInfoProvider nodeInfoProvider;
-    private final int replicationFactor;
     private final HazelcastInstance hazelcast;
+    private final GutenbergBookProvider bookProvider;
+    private final BookStorageDate bookStorageDate;
 
     public HazelcastDatalakeListener(HazelcastInstance hazelcast,
                                      NodeInfoProvider nodeInfoProvider,
-                                     int replicationFactor) {
+                                     GutenbergBookProvider bookProvider,
+                                     BookStorageDate bookStorageDate) {
         this.hazelcast = hazelcast;
         this.nodeInfoProvider = nodeInfoProvider;
-        this.replicationFactor = replicationFactor;
+        this.bookProvider = bookProvider;
+        this.bookStorageDate = bookStorageDate;
     }
 
     public void registerListener() {
-        MultiMap<Integer, ReplicatedBook> datalake = hazelcast.getMultiMap("datalake");
-        datalake.addEntryListener(this, true);
+        IQueue<BookReplicationCommand> booksToBeReplicated = hazelcast.getQueue("booksToBeReplicated");
+
+        booksToBeReplicated.addItemListener(new ItemListener<BookReplicationCommand>() {
+            @Override
+            public void itemAdded(ItemEvent<BookReplicationCommand> itemEvent) {
+                processBook(itemEvent.getItem());
+            }
+
+            @Override
+            public void itemRemoved(ItemEvent<BookReplicationCommand> itemEvent) {}
+        }, true);
     }
 
-    @Override
-    public void entryAdded(EntryEvent<Integer, ReplicatedBook> event) {
-        ReplicatedBook replicated = event.getValue();
-        int bookId = event.getKey();
-
+    private void processBook(BookReplicationCommand replicated) {
         if (replicated.getSourceNode().equals(nodeInfoProvider.getNodeId())) return;
-
-        IMap<Integer, Integer> replicaCount = hazelcast.getMap("replication-count");
-        int current = replicaCount.getOrDefault(bookId, 1);
-        if (current >= replicationFactor) return;
-        replicaCount.put(bookId, current + 1);
-
-        saveRetrievedBook(bookId, replicated.getHeader(), replicated.getBody());
+        IMap<Integer,Integer> replicationLog = hazelcast.getMap("replicationLog");
+        saveRetrievedBook(replicated.getId());
+        replicationLog.put(replicated.getId(), replicationLog.getOrDefault(replicated.getId(), 1) + 1);
+        System.out.println(replicationLog);
     }
 
-    public void saveRetrievedBook(int bookId, String header, String body) {
+    private void saveRetrievedBook(int bookId) {
         try {
-
-            DateTimePathGenerator dateTimePathGenerator = new DateTimePathGenerator("datalake");
-            // add env var for datalakepath?
-            Path path = dateTimePathGenerator.generatePath();
-
-            Path headerPath = path.resolve(String.format("%d_header.txt", bookId));
-            Path contentPath = path.resolve(String.format("%d_body.txt", bookId));
-
-            Files.writeString(headerPath, header);
-            Files.writeString(contentPath, body);
-
-        } catch (IOException e) {
+            this.bookStorageDate.save(bookId,this.bookProvider.getBook(bookId));
+            addBookLocation(bookId);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-
+    public void addBookLocation(int bookId) {
+        MultiMap<Integer,NodeInfoProvider> bookLocations = this.hazelcast.getMultiMap("bookLocations");
+        bookLocations.put(bookId, this.nodeInfoProvider);
+    }
 }

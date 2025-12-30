@@ -5,6 +5,8 @@ import com.guanchedata.infrastructure.adapters.apiservices.IndexingService;
 import com.guanchedata.infrastructure.adapters.apiservices.SearchService;
 import com.guanchedata.infrastructure.adapters.bookstore.HazelcastBookStore;
 import com.guanchedata.infrastructure.adapters.indexstore.HazelcastIndexStore;
+import com.guanchedata.infrastructure.adapters.metadata.HazelcastMetadataStore;
+import com.guanchedata.infrastructure.adapters.metadata.MetadataParser;
 import com.guanchedata.infrastructure.adapters.tokenizer.TextTokenizer;
 import com.guanchedata.infrastructure.config.HazelcastConfig;
 import com.guanchedata.infrastructure.config.MessageBrokerConfig;
@@ -34,7 +36,9 @@ public class Main {
         HazelcastBookStore bookStore = new HazelcastBookStore(hazelcastInstance);
         TextTokenizer tokenizer = new TextTokenizer();
 
-        IndexingService indexingService = new IndexingService(indexStore, tokenizer, bookStore);
+        HazelcastMetadataStore hazelcastMetadataStore = new HazelcastMetadataStore(hazelcastInstance, new MetadataParser());
+
+        IndexingService indexingService = new IndexingService(indexStore, tokenizer, bookStore, hazelcastMetadataStore);
         SearchService searchService = new SearchService(indexStore);
         IndexingController controller = new IndexingController(indexingService, searchService);
 
@@ -61,13 +65,6 @@ public class Main {
         app.post("/index/document/{documentId}", controller::indexDocument);
         app.get("/search", controller::search);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info("Shutting down Indexing Service");
-            messageConsumer.stopConsuming();
-            app.stop();
-            hazelcastInstance.shutdown();
-        }));
-
-        log.info("Indexing Service running on port {}", config.getPort());
+        log.info("Indexing Service running on port {}\n", config.getPort());
     }
 }

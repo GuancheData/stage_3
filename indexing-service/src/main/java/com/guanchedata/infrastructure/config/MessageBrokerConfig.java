@@ -13,7 +13,7 @@ public class MessageBrokerConfig {
         MessageConsumer messageConsumer = new ActiveMQMessageConsumer(brokerUrl, "documents.ingested");
         messageConsumer.startConsuming(documentId -> {
             log.info("Processing document from broker: {}", documentId);
-            indexingService.indexDocument(documentId);
+            indexingService.indexDocument(Integer.parseInt(documentId));
         });
         return messageConsumer;
     }

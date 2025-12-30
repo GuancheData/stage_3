@@ -1,6 +1,5 @@
 package com.guanchedata.infrastructure.adapters.bookprovider;
 
-import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastReplicationManager;
 import com.guanchedata.infrastructure.ports.BookStorage;
 import com.guanchedata.infrastructure.ports.PathGenerator;
 
@@ -10,18 +9,13 @@ import java.nio.file.Path;
 
 public class BookStorageDate implements BookStorage {
     private final PathGenerator pathGenerator;
-    private final GutenbergBookContentSeparator contentSeparator;
-    private final HazelcastReplicationManager hazelcastReplicationManager;
 
-    public BookStorageDate(PathGenerator pathGenerator, GutenbergBookContentSeparator contentSeparator, HazelcastReplicationManager hazelcastReplicationManager) {
+    public BookStorageDate(PathGenerator pathGenerator) {
         this.pathGenerator = pathGenerator;
-        this.contentSeparator = contentSeparator;
-        this.hazelcastReplicationManager = hazelcastReplicationManager;
     }
 
     @Override
-    public Path save(int bookId, String content) throws IOException {
-        String[] contentSeparated = contentSeparator.separateContent(content);
+    public Path save(int bookId, String[] contentSeparated) throws IOException {
         String header = contentSeparated[0];
         String body = contentSeparated[1];
 
@@ -36,8 +30,6 @@ public class BookStorageDate implements BookStorage {
         Files.writeString(contentPath, body);
 
         // EXTRACT METHOD
-
-        this.hazelcastReplicationManager.getHazelcastReplicationExecuter().replicate(bookId,header,body);
 
         return path;
     }

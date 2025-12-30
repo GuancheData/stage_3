@@ -1,40 +1,41 @@
 package com.guanchedata.infrastructure.adapters.bookstore;
 
-import com.guanchedata.model.ReplicatedBook;
+import com.guanchedata.model.BookContent;
 import com.guanchedata.infrastructure.ports.BookStore;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.multimap.MultiMap;
+import com.hazelcast.map.IMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 
 public class HazelcastBookStore implements BookStore {
     private static final Logger log = LoggerFactory.getLogger(HazelcastBookStore.class);
-    private final MultiMap<Integer, ReplicatedBook> datalakeMultiMap;
+    private final IMap<Integer, BookContent> datalake;
 
     public HazelcastBookStore(HazelcastInstance hazelcastInstance) {
-        this.datalakeMultiMap = hazelcastInstance.getMultiMap("datalake");
-        log.info("Connected to Hazelcast datalake MultiMap");
+        this.datalake = hazelcastInstance.getMap("datalake");
     }
 
     @Override
-    public String getBookContent(String bookId) {
+    public String[] getBookContent(int bookId) {
         try {
-            Integer id = Integer.parseInt(bookId);
-            Collection<ReplicatedBook> books = datalakeMultiMap.get(id);
 
-            if (books == null || books.isEmpty()) {
-                log.error("Book not found in Hazelcast datalake MultiMap: {}", bookId);
+            BookContent book = this.datalake.get(bookId);
+            if (book == null) {
+                log.error("Book not found in Hazelcast datalake: {}", bookId);
                 throw new RuntimeException("Book not found in Hazelcast: " + bookId);
             }
 
-            ReplicatedBook book = books.iterator().next();
-            log.info("Retrieved book {} from Hazelcast datalake MultiMap", bookId);
-            return book.getBody();
+            log.info("Retrieved book {} from Hazelcast datalake", bookId);
+            eraseBook(bookId);
+            return new String[]{book.getHeader(), book.getBody()};
         } catch (NumberFormatException e) {
             log.error("Invalid book ID format: {}", bookId, e);
             throw new RuntimeException("Invalid book ID format: " + bookId, e);
         }
+    }
+
+    public void eraseBook(int bookId) {
+        this.datalake.remove(bookId);
     }
 }

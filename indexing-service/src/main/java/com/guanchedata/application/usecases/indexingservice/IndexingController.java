@@ -21,7 +21,7 @@ public class IndexingController {
     }
 
     public void indexDocument(Context ctx) {
-        String documentId = ctx.pathParam("documentId");
+        int documentId = Integer.parseInt(ctx.pathParam("documentId"));
         log.info("Received index request for document: {}", documentId);
 
         try {
