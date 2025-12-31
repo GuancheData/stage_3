@@ -35,7 +35,6 @@ public class Main {
         HazelcastIndexStore indexStore = new HazelcastIndexStore(hazelcastInstance);
         HazelcastBookStore bookStore = new HazelcastBookStore(hazelcastInstance);
         TextTokenizer tokenizer = new TextTokenizer();
-
         HazelcastMetadataStore hazelcastMetadataStore = new HazelcastMetadataStore(hazelcastInstance, new MetadataParser());
 
         IndexingService indexingService = new IndexingService(indexStore, tokenizer, bookStore, hazelcastMetadataStore);

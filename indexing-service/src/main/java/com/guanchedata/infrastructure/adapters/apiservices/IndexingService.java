@@ -1,13 +1,14 @@
 package com.guanchedata.infrastructure.adapters.apiservices;
 
-import com.guanchedata.infrastructure.adapters.metadata.HazelcastMetadataStore;
 import com.guanchedata.infrastructure.ports.BookStore;
 import com.guanchedata.infrastructure.ports.IndexStore;
+import com.guanchedata.infrastructure.ports.MetadataStore;
 import com.guanchedata.infrastructure.ports.Tokenizer;
+import com.hazelcast.collection.ISet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.transform.Source;
+import java.util.Collection;
 import java.util.Set;
 
 public class IndexingService {
@@ -16,13 +17,13 @@ public class IndexingService {
     private final IndexStore indexStore;
     private final Tokenizer tokenizer;
     private final BookStore bookStore;
-    private final HazelcastMetadataStore hazelcastMetadataStore;
+    private final MetadataStore metadataStore;
 
-    public IndexingService(IndexStore indexStore, Tokenizer tokenizer, BookStore bookStore, HazelcastMetadataStore hazelcastMetadataStore) {
+    public IndexingService(IndexStore indexStore, Tokenizer tokenizer, BookStore bookStore, MetadataStore metadataStore) {
         this.indexStore = indexStore;
         this.tokenizer = tokenizer;
         this.bookStore = bookStore;
-        this.hazelcastMetadataStore = hazelcastMetadataStore;
+        this.metadataStore = metadataStore;
     }
 
     public void indexDocument(int documentId) {
@@ -35,8 +36,9 @@ public class IndexingService {
             // inverted index method
             int tokenCount = generateInvertedIndex(content[1], documentId);
             // metadata method
-            this.hazelcastMetadataStore.saveMetadata(documentId, content[0]);
+            this.metadataStore.saveMetadata(documentId, content[0]);
             //System.out.println("Done indexing for document: " + documentId + ". Token count: " + tokenCount);
+            registerIndexAction(documentId);
             log.info("Done indexing for document: {}. Token count: {}\n", documentId, tokenCount);
 
         } catch (Exception e) {
@@ -55,5 +57,11 @@ public class IndexingService {
             tokenCount++;
         }
         return tokenCount;
+    }
+
+    public void registerIndexAction(int bookId){
+        Collection<Integer> indexingRegistry = this.indexStore.retrieveIndexingRegistry();
+        indexingRegistry.add(bookId);
+        //indexingRegistry.forEach(System.out::println);
     }
 }

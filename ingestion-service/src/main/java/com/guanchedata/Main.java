@@ -41,7 +41,7 @@ public class Main {
 
         DatalakeRecoveryNotifier recovery = new DatalakeRecoveryNotifier(hazelcastManager.getHazelcastInstance(), hazelcastManager.getNodeInfoProvider(), notifier);
         recovery.reloadDatalakeFromDisk(args[0]);
-
+        ////////
         BookIngestionPeriodicExecutor bookIngestionExecutor = new BookIngestionPeriodicExecutor(hazelcastManager.getHazelcastInstance(),ingestBookService);
 
         Javalin app = Javalin.create(config -> {
