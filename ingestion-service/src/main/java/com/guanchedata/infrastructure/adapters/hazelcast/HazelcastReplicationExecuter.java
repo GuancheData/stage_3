@@ -35,10 +35,6 @@ public class HazelcastReplicationExecuter implements ReplicationExecuter {
             for (int i = 1; i < replicationFactor; i++) {
                 booksToBeReplicated.put(new BookReplicationCommand(bookId, this.nodeInfoProvider.getNodeId()));
             }
-            List<BookReplicationCommand> snapshot = List.copyOf(booksToBeReplicated);
-            for (BookReplicationCommand book: snapshot){
-                System.out.println(book.getId());
-            }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {

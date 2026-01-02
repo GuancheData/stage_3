@@ -1,9 +1,25 @@
+
 services:
-  ingestion1:
+  activemq:
+    image: rmohr/activemq:latest
+    container_name: activemq
+    restart: always
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    environment:
+      ACTIVEMQ_ADMIN_LOGIN: admin
+      ACTIVEMQ_ADMIN_PASSWORD: admin
+    volumes:
+      - ./data/activemq:/opt/activemq/data
+    networks:
+      - search_net
+
+  ingestion-service:
     build:
       context: ./ingestion-service
     image: ingestion-service:latest
-    container_name: ingestion1
+    container_name: ingestion-service
     ports:
       - "5701:5701"
     command: ['datalake', 'logs/log.log']
@@ -13,20 +29,22 @@ services:
       HZ_PUBLIC_ADDRESS: xxx:5701
       HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
-      BROKER_URL: tcp://xxx:61616
+      BROKER_URL: "failover:(tcp://xxx:61616)?randomize=false"
       REPLICATION_FACTOR: 3
       INDEXING_BUFFER_FACTOR: 10
     volumes:
       - ./mnt/datalake:/app/datalake
       - ./mnt/logs:/app/logs
+    depends_on:
+      - activemq
     networks:
       - search_net
 
-  indexing1:
+  indexing-service:
     build:
       context: ./indexing-service
     image: indexing-service:latest
-    container_name: indexing1
+    container_name: indexing-service
     ports:
       - "5702:5702"
     command: ['datalake']
@@ -36,45 +54,13 @@ services:
       HZ_PUBLIC_ADDRESS: xxx:5702
       HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
-      BROKER_URL: tcp://xxx:61616
+      BROKER_URL: "failover:(tcp://xxx:61616)?randomize=false"
     volumes:
       - ./mnt/datalake:/app/datalake
     depends_on:
-      - ingestion1
+      - ingestion-service
     networks:
       - search_net
-
-#  indexing2:
-#    build:
-#      context: ./indexing-service
-#    image: indexing-service:latest
-#    container_name: indexing2
-#    ports:
-#      - "5703:5703"
-#    environment:
-#      PUBLIC_IP: "" #IP
-#      HZ_PORT: "5703"
-#      BROKER_URL: tcp://xxx:61616
-#      HAZELCAST_CLUSTER_NAME: SearchEngine
-#    depends_on:
-#      - ingestion1
-#    networks:
-#      - search_net
-
-  activemq:
-    image: rmohr/activemq:latest
-    container_name: activemq
-    restart: always
-    ports:
-      - "61616:61616"
-      - "8161:8161"
-    environment:
-      - ACTIVEMQ_ADMIN_LOGIN=admin
-      - ACTIVEMQ_ADMIN_PASSWORD=admin
-    networks:
-      - search_net
-    profiles:
-      - broker
 
 networks:
   search_net:
