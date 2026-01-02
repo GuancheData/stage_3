@@ -50,9 +50,9 @@ public class IndexingService {
     }
 
     private void indexResolvedDocument(int documentId, String header, String body) {
+        registerIndexAction(documentId);
         int tokenCount = generateInvertedIndex(body, documentId);
         metadataStore.saveMetadata(documentId, header);
-        registerIndexAction(documentId);
 
         log.info(
                 "Done indexing for document: {}. Token count: {}",
