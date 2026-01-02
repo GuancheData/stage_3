@@ -67,6 +67,7 @@ services:
       HZ_PORT: "5703"
       SERVICE_PORT: "7003"
       CLUSTER_NAME: SearchEngine
+      SORTING_CRITERIA: "frequency" #frequency or id
     depends_on:
       - indexing1
     networks:

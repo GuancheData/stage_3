@@ -7,8 +7,9 @@ import com.guanchedata.infrastructure.ports.Tokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.transform.Source;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class IndexingService {
     private static final Logger log = LoggerFactory.getLogger(IndexingService.class);
@@ -27,16 +28,12 @@ public class IndexingService {
 
     public void indexDocument(int documentId) {
         log.info("Starting indexing for document: " + documentId);
-        //System.out.println("Starting indexing for document: " + documentId);
 
         try {
-            String[] content = bookStore.getBookContent(documentId); // get header and body
+            String[] content = bookStore.getBookContent(documentId);
 
-            // inverted index method
             int tokenCount = generateInvertedIndex(content[1], documentId);
-            // metadata method
             this.hazelcastMetadataStore.saveMetadata(documentId, content[0]);
-            //System.out.println("Done indexing for document: " + documentId + ". Token count: " + tokenCount);
             log.info("Done indexing for document: {}. Token count: {}\n", documentId, tokenCount);
 
         } catch (Exception e) {
@@ -46,14 +43,21 @@ public class IndexingService {
     }
 
     public int generateInvertedIndex(String body, int documentId) {
-        Set<String> tokens = tokenizer.tokenize(body);
+        List<String> tokens = tokenizer.tokenize(body);
 
-        int tokenCount = 0;
+        Map<String, Integer> frequencies = new HashMap<>();
         for (String token : tokens) {
             String normalizedToken = token.toLowerCase();
-            indexStore.addEntry(normalizedToken, String.valueOf(documentId));
-            tokenCount++;
+            frequencies.put(normalizedToken, frequencies.getOrDefault(normalizedToken, 0) + 1);
         }
-        return tokenCount;
+
+        for (Map.Entry<String, Integer> entry : frequencies.entrySet()) {
+            String term = entry.getKey();
+            Integer frequency = entry.getValue();
+
+            indexStore.addEntry(term, String.valueOf(documentId) + ":" + frequency);
+        }
+
+        return tokens.size();
     }
 }

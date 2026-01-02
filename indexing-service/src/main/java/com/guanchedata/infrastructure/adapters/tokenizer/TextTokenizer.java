@@ -44,9 +44,9 @@ public class TextTokenizer implements Tokenizer {
     }
 
     @Override
-    public Set<String> tokenize(String text) {
+    public List<String> tokenize(String text) {
         if (text == null || text.isEmpty()) {
-            return new HashSet<>();
+            return new ArrayList<>();
         }
 
         return Arrays.stream(text.toLowerCase()
@@ -55,6 +55,6 @@ public class TextTokenizer implements Tokenizer {
                 .filter(token -> !token.isEmpty())
                 .filter(token -> token.length() > 2)
                 .filter(token -> !stopwords.contains(token))
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
     }
 }

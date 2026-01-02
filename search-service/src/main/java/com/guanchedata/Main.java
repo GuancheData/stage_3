@@ -26,9 +26,14 @@ public class Main {
         HazelcastInstance hazelcastInstance = hzConfig.initHazelcast(config.getClusterName());
 
         HazelcastIndexStore indexStore = new HazelcastIndexStore(hazelcastInstance);
-        HazelcastMetadataStore metadataStore = new HazelcastMetadataStore(hazelcastInstance);  // ← Sin parser
+        HazelcastMetadataStore metadataStore = new HazelcastMetadataStore(hazelcastInstance);
 
-        SearchService searchService = new SearchService(indexStore, metadataStore);
+        String sortingCriteria = System.getenv("SORTING_CRITERIA");
+        if (sortingCriteria == null || sortingCriteria.isEmpty()) {
+            sortingCriteria = "frequency";
+        }
+
+        SearchService searchService = new SearchService(indexStore, metadataStore, sortingCriteria);
         SearchController searchController = new SearchController(searchService);
 
         Gson gson = new Gson();
@@ -50,6 +55,6 @@ public class Main {
         app.get("/search", searchController::search);
         app.get("/health", searchController::health);
 
-        log.info("Search Service running on port " + config.getServicePort());
+        log.info("Search Service running on port " + config.getServicePort() + " with sorting: " + sortingCriteria);
     }
 }

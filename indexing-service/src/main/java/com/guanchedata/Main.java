@@ -2,7 +2,6 @@ package com.guanchedata;
 
 import com.guanchedata.application.usecases.indexingservice.IndexingController;
 import com.guanchedata.infrastructure.adapters.apiservices.IndexingService;
-import com.guanchedata.infrastructure.adapters.apiservices.SearchService;
 import com.guanchedata.infrastructure.adapters.bookstore.HazelcastBookStore;
 import com.guanchedata.infrastructure.adapters.indexstore.HazelcastIndexStore;
 import com.guanchedata.infrastructure.adapters.metadata.HazelcastMetadataStore;
@@ -39,8 +38,7 @@ public class Main {
         HazelcastMetadataStore hazelcastMetadataStore = new HazelcastMetadataStore(hazelcastInstance, new MetadataParser());
 
         IndexingService indexingService = new IndexingService(indexStore, tokenizer, bookStore, hazelcastMetadataStore);
-        SearchService searchService = new SearchService(indexStore);
-        IndexingController controller = new IndexingController(indexingService, searchService);
+        IndexingController controller = new IndexingController(indexingService);
 
         MessageBrokerConfig brokerConfig = new MessageBrokerConfig();
         MessageConsumer messageConsumer = brokerConfig.createConsumer(config.getBrokerUrl(), indexingService);
@@ -63,8 +61,6 @@ public class Main {
         }).start(config.getPort());
 
         app.post("/index/document/{documentId}", controller::indexDocument);
-        app.get("/search", controller::search);
-
         log.info("Indexing Service running on port {}\n", config.getPort());
     }
 }
