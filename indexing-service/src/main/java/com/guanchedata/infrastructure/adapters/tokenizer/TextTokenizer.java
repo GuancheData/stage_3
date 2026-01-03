@@ -52,6 +52,7 @@ public class TextTokenizer implements Tokenizer {
         return Arrays.stream(text.toLowerCase()
                         .replaceAll("[^a-z0-9\\s]", " ")
                         .split("\\s+"))
+                .parallel()
                 .filter(token -> !token.isEmpty())
                 .filter(token -> token.length() > 2)
                 .filter(token -> !stopwords.contains(token))

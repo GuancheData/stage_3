@@ -7,9 +7,9 @@ import com.guanchedata.infrastructure.ports.Tokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class IndexingService {
     private static final Logger log = LoggerFactory.getLogger(IndexingService.class);
@@ -44,22 +44,23 @@ public class IndexingService {
 
     public int generateInvertedIndex(String body, int documentId) {
         List<String> tokens = tokenizer.tokenize(body);
-
-        Map<String, Integer> frequencies = new HashMap<>();
-        for (String token : tokens) {
-            String normalizedToken = token.toLowerCase();
-            frequencies.put(normalizedToken, frequencies.getOrDefault(normalizedToken, 0) + 1);
-        }
-
-        for (Map.Entry<String, Integer> entry : frequencies.entrySet()) {
+        Map<String, Long> frequencies =
+                tokens.parallelStream()
+                        .map(String::toLowerCase)
+                        .collect(Collectors.groupingBy(
+                                t -> t,
+                                Collectors.counting()
+                        ));
+        for (Map.Entry<String, Long> entry : frequencies.entrySet()) {
             String term = entry.getKey();
-            Integer frequency = entry.getValue();
+            Long frequency = entry.getValue();
 
-            indexStore.addEntry(term, String.valueOf(documentId) + ":" + frequency);
+            indexStore.addEntry(
+                    term,
+                    documentId + ":" + frequency
+            );
         }
-
         indexStore.pushEntries();
-
         return tokens.size();
     }
 }
