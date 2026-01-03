@@ -88,6 +88,18 @@ services:
     profiles:
       - broker
 
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./search-service/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - search1
+    networks:
+      - search_net
+
 networks:
   search_net:
     driver: bridge
