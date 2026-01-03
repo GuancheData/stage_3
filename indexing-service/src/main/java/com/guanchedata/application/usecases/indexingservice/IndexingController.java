@@ -1,7 +1,7 @@
 package com.guanchedata.application.usecases.indexingservice;
 
 import com.guanchedata.infrastructure.adapters.apiservices.IndexingService;
-import com.guanchedata.infrastructure.adapters.apiservices.SearchService;
+//import com.guanchedata.infrastructure.adapters.apiservices.SearchService;
 import com.guanchedata.infrastructure.adapters.recovery.ReindexingExecutor;
 import io.javalin.http.Context;
 import org.slf4j.Logger;

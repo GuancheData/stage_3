@@ -26,7 +26,7 @@ public class Main {
 
         ActiveMQBookIngestedNotifier notifier =  new ActiveMQBookIngestedNotifier(System.getenv("BROKER_URL"));
         HazelcastManager hazelcastManager = new HazelcastManager("SearchEngine", Integer.parseInt(System.getenv("REPLICATION_FACTOR")), gutenbergBookProvider, storageDate);
-        BookDownloadStatusStore bookDownloadLog = new BookDownloadLog(hazelcastManager.getHazelcastInstance(), args[1]);
+        BookDownloadStatusStore bookDownloadLog = new BookDownloadLog(hazelcastManager.getHazelcastInstance(), "log");
         BookDownloader ingestBookService = new IngestBookService(storageDate, bookDownloadLog, notifier, hazelcastManager, gutenbergBookProvider);
 
 
