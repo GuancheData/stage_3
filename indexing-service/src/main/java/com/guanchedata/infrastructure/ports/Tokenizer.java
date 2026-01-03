@@ -1,7 +1,7 @@
 package com.guanchedata.infrastructure.ports;
 
-import java.util.Set;
+import java.util.List;
 
 public interface Tokenizer {
-    Set<String> tokenize(String text);
+    List<String> tokenize(String text);
 }

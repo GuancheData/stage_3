@@ -1,0 +1,15 @@
+<hazelcast-client xmlns="http://www.hazelcast.com/schema/client-config"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://www.hazelcast.com/schema/client-config
+                                      http://www.hazelcast.com/schema/client-config/hazelcast-client-config-5.4.xsd">
+
+    <cluster-name>SearchEngine</cluster-name>
+
+    <network>
+        <cluster-members>
+            <address>ingestion1:5701</address>
+            <address>indexing1:5702</address>
+        </cluster-members>
+    </network>
+
+</hazelcast-client>

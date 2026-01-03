@@ -6,6 +6,7 @@ public class MetadataParser {
 
     public BookMetadata parseFromHeader(String header) {
 
+        String title = null;
         String author = null;
         String language = null;
         String year = null;
@@ -15,7 +16,9 @@ public class MetadataParser {
         for (String line : lines) {
             line = line.trim();
 
-            if (line.startsWith("Author:")) {
+            if (line.startsWith("Title:")) {
+                title = line.substring("Title:".length()).trim();
+            } else if (line.startsWith("Author:")) {
                 author = line.substring("Author:".length()).trim();
             } else if (line.startsWith("Language:")) {
                 language = line.substring("Language:".length()).trim();
@@ -27,6 +30,6 @@ public class MetadataParser {
             }
         }
 
-        return new BookMetadata(author, language, Integer.parseInt(year));
+        return new BookMetadata(title, author, language, Integer.parseInt(year));
     }
 }
