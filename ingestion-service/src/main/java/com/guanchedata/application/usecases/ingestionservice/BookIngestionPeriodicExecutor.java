@@ -3,13 +3,11 @@ package com.guanchedata.application.usecases.ingestionservice;
 import com.guanchedata.infrastructure.ports.BookDownloader;
 import com.guanchedata.model.BookContent;
 import com.guanchedata.model.NodeInfoProvider;
-import com.hazelcast.cluster.Member;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.multimap.MultiMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +28,7 @@ public class BookIngestionPeriodicExecutor {
 
     public void startPeriodicExecution() {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleWithFixedDelay(this::execute, 0, 5, TimeUnit.SECONDS);
+        scheduler.scheduleWithFixedDelay(this::execute, 0, 5, TimeUnit.MILLISECONDS);
     }
 
     public void execute() {

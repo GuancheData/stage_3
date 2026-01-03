@@ -62,5 +62,10 @@ public class Main {
 
         app.post("/index/document/{documentId}", controller::indexDocument);
         log.info("Indexing Service running on port {}\n", config.getPort());
+
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            brokerConfig.shutdown();
+        }));
     }
 }
