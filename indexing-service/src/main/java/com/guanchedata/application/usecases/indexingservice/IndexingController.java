@@ -26,15 +26,15 @@ public class IndexingController {
         try {
             indexingService.indexDocument(documentId);
             ctx.status(200).json(Map.of(
-                    "status", "success",
-                    "message", "Document indexed successfully",
-                    "documentId", documentId
+                "status", "success",
+                "message", "Document indexed successfully",
+                "documentId", documentId
             ));
         } catch (Exception e) {
             log.error("Error indexing document {}: {}", documentId, e.getMessage());
             ctx.status(500).json(Map.of(
-                    "status", "error",
-                    "message", e.getMessage()
+                "status", "error",
+                "message", e.getMessage()
             ));
         }
     }

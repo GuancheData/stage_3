@@ -19,7 +19,6 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        BookDownloadStatusStore bookDownloadLog = new BookDownloadLog(args[1]);
         PathGenerator pathGenerator = new DateTimePathGenerator(args[0]);
 
         BookStorageDate storageDate = new BookStorageDate(pathGenerator);
@@ -27,6 +26,7 @@ public class Main {
 
         ActiveMQBookIngestedNotifier notifier =  new ActiveMQBookIngestedNotifier(System.getenv("BROKER_URL"));
         HazelcastManager hazelcastManager = new HazelcastManager("SearchEngine", Integer.parseInt(System.getenv("REPLICATION_FACTOR")), gutenbergBookProvider, storageDate);
+        BookDownloadStatusStore bookDownloadLog = new BookDownloadLog(hazelcastManager.getHazelcastInstance(), "log");
         BookDownloader ingestBookService = new IngestBookService(storageDate, bookDownloadLog, notifier, hazelcastManager, gutenbergBookProvider);
 
 

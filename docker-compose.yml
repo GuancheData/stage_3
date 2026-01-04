@@ -6,7 +6,7 @@ services:
     container_name: ingestion1
     ports:
       - "5701:5701"
-    command: ['datalake', 'logs/log.log']
+    command: ['datalake']
     environment:
       #PUBLIC_IP: "" # IP
       HZ_PORT: "5701"
@@ -18,7 +18,6 @@ services:
       INDEXING_BUFFER_FACTOR: 10
     volumes:
       - ./mnt/datalake:/app/datalake
-      - ./mnt/logs:/app/logs
     networks:
       - search_net
 

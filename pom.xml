@@ -12,6 +12,7 @@
         <module>ingestion-service</module>
         <module>indexing-service</module>
         <module>search-service</module>
+        <module>benchmarking</module>
     </modules>
 
     <properties>

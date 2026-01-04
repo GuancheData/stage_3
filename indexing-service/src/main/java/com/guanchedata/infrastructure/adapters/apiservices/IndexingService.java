@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class IndexingService {
 
@@ -80,10 +82,9 @@ public class IndexingService {
         }
 
         indexStore.pushEntries();
-
+        indexStore.saveTokens(tokens.size());
         return tokens.size();
     }
-
 
     private void registerIndexAction(int documentId) {
         Collection<Integer> indexingRegistry =
