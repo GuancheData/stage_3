@@ -32,18 +32,19 @@ public class BookIngestionPeriodicExecutor {
 
     public void startPeriodicExecution() {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleWithFixedDelay(this::execute, 0, 1, TimeUnit.MILLISECONDS);
+        scheduler.scheduleWithFixedDelay(this::execute, 0, 5, TimeUnit.MILLISECONDS);
     }
 
-    public void execute() {
-        System.out.print("Indexers alive: ");
-        System.out.println(this.hazelcast.getCluster().getMembers().stream().filter(m -> "indexer".equals(m.getAttribute("role"))).count());
+    private static final long RECOVERY_LOG_INTERVAL_MS = 20_000;
+    private long lastRecoveryLogTime = 0;
 
+    public void execute() {
+        System.out.println(this.hazelcast.getCluster().getMembers().stream().filter(m -> "indexer".equals(m.getAttribute("role"))).count());
         IMap<Integer, BookContent> datalake = this.hazelcast.getMap("datalake");
         if (datalake.keySet().size() < Integer.parseInt(System.getenv("INDEXING_BUFFER_FACTOR")) * this.hazelcast.getCluster().getMembers().stream().filter(m -> "indexer".equals(m.getAttribute("role"))).count()){
             try {
                 if (this.queue.isEmpty()) {
-                    System.out.println("A node is executing inverted index recovery from disk. Ingestion will start when it's done");
+                    logRecoveryIfNeeded();
                 }
                 else {
                     Integer bookId = queue.poll(100, TimeUnit.MILLISECONDS);
@@ -62,4 +63,13 @@ public class BookIngestionPeriodicExecutor {
             }
         }
     }
+
+    private void logRecoveryIfNeeded() {
+        long now = System.currentTimeMillis();
+        if (now - lastRecoveryLogTime >= RECOVERY_LOG_INTERVAL_MS) {
+            System.out.println("[INDEXER][RECOVERY] Rebuilding inverted index from disk. Ingestion paused.");
+            lastRecoveryLogTime = now;
+        }
+    }
+
 }

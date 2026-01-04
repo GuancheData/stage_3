@@ -3,6 +3,7 @@ package com.guanchedata.infrastructure.adapters.indexstore;
 import com.guanchedata.infrastructure.ports.IndexStore;
 import com.hazelcast.collection.ISet;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.multimap.MultiMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,12 +34,17 @@ public class HazelcastIndexStore implements IndexStore {
 
     @Override
     public void pushEntries() {
+        FencedLock lock = hz.getCPSubsystem().getLock("lock:inverted-index:distributed");
         for (Map.Entry<String, Set<String>> entry: invertedIndexEntry.entrySet()) {
             String term = entry.getKey();
             for (String value : entry.getValue()) {
-                invertedIndex.put(term, value);
+                lock.lock();
+                try {
+                    invertedIndex.put(term, value);
+                } finally {
+                    lock.unlock();
+                }
             }
-
         }
         invertedIndexEntry.clear();
     }
