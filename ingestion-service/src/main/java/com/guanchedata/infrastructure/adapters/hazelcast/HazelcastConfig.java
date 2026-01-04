@@ -2,6 +2,7 @@ package com.guanchedata.infrastructure.adapters.hazelcast;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.JoinConfig;
+import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -14,6 +15,12 @@ public class HazelcastConfig {
 
         Config config = new Config();
         config.setClusterName(clusterName);
+
+        MapConfig mapCfg = new MapConfig("datalake")
+                .setBackupCount(2)
+                .setAsyncBackupCount(1);
+        config.addMapConfig(mapCfg);
+
         //config.getNetworkConfig().setPublicAddress(System.getenv("PUBLIC_IP"));
         //config.getNetworkConfig().setPort(5701);
         NetworkConfig networkConfig = config.getNetworkConfig();

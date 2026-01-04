@@ -20,6 +20,8 @@ public class HazelcastBookStore implements BookStore {
     public String[] getBookContent(int bookId) {
         try {
 
+            System.out.println(datalake.keySet());
+
             BookContent book = this.datalake.get(bookId);
             if (book == null) {
                 log.error("Book not found in Hazelcast datalake: {}", bookId);

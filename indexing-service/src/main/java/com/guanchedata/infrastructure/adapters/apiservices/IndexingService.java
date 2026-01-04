@@ -33,10 +33,7 @@ public class IndexingService {
 
         try {
             String[] content = bookStore.getBookContent(documentId);
-
-            int tokenCount = generateInvertedIndex(content[1], documentId);
-            this.hazelcastMetadataStore.saveMetadata(documentId, content[0]);
-            log.info("Done indexing for document: {}. Token count: {}\n", documentId, tokenCount);
+            indexResolvedDocument(documentId, content[0], content[1]);
 
         } catch (Exception e) {
             log.error("Error indexing document {}: {}", documentId, e.getMessage(), e);
@@ -44,7 +41,29 @@ public class IndexingService {
         }
     }
 
-    public int generateInvertedIndex(String body, int documentId) {
+    public void indexLocalDocument(int documentId, String header, String body) {
+        log.info("Starting local indexing for document: {}", documentId);
+        try {
+            indexResolvedDocument(documentId, header, body);
+        } catch (Exception e) {
+            log.error("Error indexing local document {}: {}", documentId, e.getMessage(), e);
+            throw new RuntimeException("Failed to index local document: " + documentId, e);
+        }
+    }
+
+    public void indexResolvedDocument(int documentId, String header, String body) {
+        registerIndexAction(documentId);
+        int tokenCount = generateInvertedIndex(body, documentId);
+        hazelcastMetadataStore.saveMetadata(documentId, header);
+
+        log.info(
+                "Done indexing for document: {}. Token count: {}",
+                documentId,
+                tokenCount
+        );
+    }
+
+    private int generateInvertedIndex(String body, int documentId) {
         List<String> tokens = tokenizer.tokenize(body);
 
         Map<String, Integer> frequencies = new HashMap<>();
@@ -65,27 +84,6 @@ public class IndexingService {
         return tokens.size();
     }
 
-    public void indexLocalDocument(int documentId, String header, String body) {
-        log.info("Starting local indexing for document: {}", documentId);
-        try {
-            indexResolvedDocument(documentId, header, body);
-        } catch (Exception e) {
-            log.error("Error indexing local document {}: {}", documentId, e.getMessage(), e);
-            throw new RuntimeException("Failed to index local document: " + documentId, e);
-        }
-    }
-
-    private void indexResolvedDocument(int documentId, String header, String body) {
-        registerIndexAction(documentId);
-        int tokenCount = generateInvertedIndex(body, documentId);
-        hazelcastMetadataStore.saveMetadata(documentId, header);
-
-        log.info(
-                "Done indexing for document: {}. Token count: {}",
-                documentId,
-                tokenCount
-        );
-    }
 
     private void registerIndexAction(int documentId) {
         Collection<Integer> indexingRegistry =

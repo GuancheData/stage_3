@@ -2,25 +2,31 @@ package com.guanchedata.infrastructure.adapters.recovery;
 
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
-
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.hazelcast.cp.IAtomicReference;
 
 public class IngestionQueueManager {
 
     private IQueue<Integer> queue;
-    private final AtomicBoolean queueInitialized = new AtomicBoolean(false);
+    private IAtomicReference<Boolean> queueInitialized;
 
-    public IngestionQueueManager(HazelcastInstance hz){
+    public IngestionQueueManager(HazelcastInstance hz) {
         this.queue = hz.getQueue("books");
+        this.queueInitialized = hz.getCPSubsystem().getAtomicReference("queueInitialized");
+
+        if (queueInitialized.get() == null) {
+            queueInitialized.set(false);
+        }
     }
 
     public void setupBookQueue(int startReference) {
         if (!queueInitialized.compareAndSet(false, true)) {
-            System.out.println("Queue initalized");
+            System.out.println("Queue already initialized by another node");
             return;
         }
+
         new Thread(() -> populateQueueAsync(startReference), "Queue-Populator").start();
     }
+
 
     private void populateQueueAsync(int maxBookId) {
         System.out.println("Initializing queue from " + (maxBookId + 1));
