@@ -7,6 +7,8 @@ import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
+import java.util.Arrays;
+
 public class HazelcastConfig {
 
     public HazelcastInstance initHazelcast(String clusterName) {
