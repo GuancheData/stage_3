@@ -8,8 +8,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.cluster.MembershipEvent;
 import com.hazelcast.cluster.MembershipListener;
 import com.hazelcast.core.HazelcastInstance;
-
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.hazelcast.cp.IAtomicReference;
 
 public class RecoveryTime {
 
@@ -64,7 +63,8 @@ public class RecoveryTime {
 
         System.out.println("\n>>> CLUSTER IS SAFE.");
 
-        AtomicBoolean measuring = new AtomicBoolean(false);
+        IAtomicReference<Boolean> measuring = hz.getCPSubsystem().getAtomicReference("recovery-measuring-lock");
+        measuring.compareAndSet(null,false);
 
         hz.getCluster().addMembershipListener(new MembershipListener() {
             @Override
@@ -85,7 +85,7 @@ public class RecoveryTime {
         Thread.currentThread().join();
     }
 
-    private static void measureRecovery(HazelcastInstance hz, long startTime, AtomicBoolean measuring) {
+    private static void measureRecovery(HazelcastInstance hz, long startTime, IAtomicReference<Boolean> measuring) {
         new Thread(() -> {
             try {
                 while (!hz.getPartitionService().isClusterSafe()) {
