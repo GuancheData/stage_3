@@ -1,9 +1,6 @@
 package com.guanchedata.infrastructure.config;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.JoinConfig;
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.config.NetworkConfig;
+import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
@@ -30,6 +27,13 @@ public class HazelcastConfig {
                 .setBackupCount(2)
                 .setAsyncBackupCount(1);
         config.addMapConfig(mapCfg3);
+
+        MapConfig mapCfg4= new MapConfig("inverted-index");
+        EvictionConfig evictionConfig = new EvictionConfig()
+                .setEvictionPolicy(EvictionPolicy.NONE);
+        mapCfg4.setEvictionConfig(evictionConfig);
+        mapCfg4.setBackupCount(1);
+        config.addMapConfig(mapCfg4);
 
         NetworkConfig networkConfig = config.getNetworkConfig();
         networkConfig.setPort(Integer.parseInt(System.getenv("HZ_PORT")));
