@@ -4,8 +4,6 @@ import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
-import java.util.Arrays;
-
 public class HazelcastConfig {
 
     public HazelcastInstance initHazelcast(String clusterName) {
@@ -35,8 +33,6 @@ public class HazelcastConfig {
         mapCfg4.setBackupCount(1);
         config.addMapConfig(mapCfg4);
 
-        //config.getNetworkConfig().setPublicAddress(System.getenv("PUBLIC_IP"));
-        //config.getNetworkConfig().setPort(5701);
         NetworkConfig networkConfig = config.getNetworkConfig();
         networkConfig.setPort(Integer.parseInt(System.getenv("HZ_PORT")));
         networkConfig.setPortAutoIncrement(false);
