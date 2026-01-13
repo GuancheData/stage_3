@@ -8,13 +8,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
 public class IngestionRate {
     public static void main(String[] args) throws Exception {
         System.setProperty("hazelcast.logging.type", "none");
         ClientConfig cc = new ClientConfig();
-        cc.setClusterName("SearchEngine");
-        cc.getNetworkConfig().addAddress("");
+
+        String clusterName = System.getenv("HAZELCAST_CLUSTER_NAME");
+        cc.setClusterName(clusterName != null ? clusterName : "SearchEngine");
+
+        String membersEnv = System.getenv("HZ_MEMBERS");
+        if (membersEnv != null && !membersEnv.isBlank()) {
+            System.out.println("Configuring Client Members: " + membersEnv);
+            for (String member : membersEnv.split(",")) {
+                cc.getNetworkConfig().addAddress(member.trim());
+            }
+        } else {
+            cc.getNetworkConfig().addAddress("ingestion1", "indexing1");
+        }
+
+        System.out.println("Attempting to connect to Hazelcast Cluster...");
         HazelcastInstance hz = HazelcastClient.newHazelcastClient(cc);
         BookDownloadLog booklog = new BookDownloadLog(hz, "log");
 
