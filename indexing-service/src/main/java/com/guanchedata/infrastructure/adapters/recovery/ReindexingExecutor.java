@@ -15,17 +15,12 @@ public class ReindexingExecutor {
     }
 
     public void executeRecovery(){
-        int startReference = this.invertedIndexRecovery.executeRecovery(); // recovers I.index from disk. does not make conflict with other reindexings
-        this.ingestionQueueManager.setupBookQueue(startReference); // first indexer to finish reindexing creates queue
+        int startReference = this.invertedIndexRecovery.executeRecovery();
+        this.ingestionQueueManager.setupBookQueue(startReference);
     }
 
-    public void rebuildIndex() {
-        this.hz.getSet("indexingRegistry").clear();
-        this.hz.getMultiMap("inverted-index").clear();
-        this.hz.getMap("bookMetadata").clear();
-        this.invertedIndexRecovery.executeRecovery();
-        //this.hz.getQueue("books").clear(); // ???????????
+    public void rebuildFromDisk() {
+        int startReference = this.invertedIndexRecovery.executeRecovery();
+        this.ingestionQueueManager.setupBookQueue(startReference);
     }
-
-
 }

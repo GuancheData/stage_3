@@ -3,11 +3,13 @@ package com.guanchedata;
 import com.guanchedata.application.usecases.indexingservice.IndexingController;
 import com.guanchedata.infrastructure.adapters.apiservices.IndexingService;
 import com.guanchedata.infrastructure.adapters.bookstore.HazelcastBookStore;
+import com.guanchedata.infrastructure.adapters.broker.RebuildMessageListener;
 import com.guanchedata.infrastructure.adapters.indexstore.HazelcastIndexStore;
 import com.guanchedata.infrastructure.adapters.metadata.HazelcastMetadataStore;
 import com.guanchedata.infrastructure.adapters.metadata.MetadataParser;
 import com.guanchedata.infrastructure.adapters.recovery.IngestionQueueManager;
 import com.guanchedata.infrastructure.adapters.recovery.InvertedIndexRecovery;
+import com.guanchedata.infrastructure.adapters.recovery.RebuildCoordinator;
 import com.guanchedata.infrastructure.adapters.recovery.ReindexingExecutor;
 import com.guanchedata.infrastructure.adapters.tokenizer.TextTokenizer;
 import com.guanchedata.infrastructure.config.HazelcastConfig;
@@ -44,13 +46,16 @@ public class Main {
         MessageBrokerConfig brokerConfig = new MessageBrokerConfig();
         MessageConsumer messageConsumer = brokerConfig.createConsumer(config.getBrokerUrl(), indexingService);
 
-        // ------------------------
-
         InvertedIndexRecovery invertedIndexRecovery = new InvertedIndexRecovery(args[0], hazelcastInstance, indexingService);
         IngestionQueueManager ingestionQueueManager = new IngestionQueueManager(hazelcastInstance);
         ReindexingExecutor reindexingExecutor = new ReindexingExecutor(invertedIndexRecovery, hazelcastInstance, ingestionQueueManager);
 
-        IndexingController controller = new IndexingController(indexingService, reindexingExecutor);
+        RebuildCoordinator rebuildCoordinator = new RebuildCoordinator(hazelcastInstance, config.getBrokerUrl());
+        RebuildMessageListener rebuildListener = new RebuildMessageListener(hazelcastInstance, reindexingExecutor, config.getBrokerUrl());
+
+        rebuildListener.startListening();
+
+        IndexingController controller = new IndexingController(indexingService, rebuildCoordinator);
 
         Gson gson = new Gson();
 
