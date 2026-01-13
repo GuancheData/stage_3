@@ -63,7 +63,7 @@ public class SearchService {
         sortResults(finalResults);
 
         long duration = System.currentTimeMillis() - startTime;
-        log.info(String.format("Search: results=%d, time=%dms", finalResults.size(), duration));
+        log.info(String.format("Search: results=%d, time=%dms\n", finalResults.size(), duration));
 
         return finalResults;
     }

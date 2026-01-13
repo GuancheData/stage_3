@@ -18,8 +18,6 @@ public class Main {
     private static final Logger log = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
-        log.info("Starting Search Service");
-
         ServiceConfig config = new ServiceConfig();
         HazelcastConfig hzConfig = new HazelcastConfig();
 
@@ -55,6 +53,6 @@ public class Main {
         app.get("/search", searchController::search);
         app.get("/health", searchController::health);
 
-        log.info("Search Service running on port " + config.getServicePort() + " with sorting: " + sortingCriteria);
+        log.info("Search Service running on port " + config.getServicePort() + " with sorting: " + sortingCriteria + "\n");
     }
 }

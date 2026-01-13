@@ -57,11 +57,7 @@ public class IndexingService {
         int tokenCount = generateInvertedIndex(body, documentId);
         hazelcastMetadataStore.saveMetadata(documentId, header);
 
-        log.info(
-                "Done indexing for document: {}. Token count: {}",
-                documentId,
-                tokenCount
-        );
+        log.info("Done indexing for document: {}. Token count: {}\n", documentId, tokenCount);
     }
 
     private int generateInvertedIndex(String body, int documentId) {

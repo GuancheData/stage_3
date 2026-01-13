@@ -27,8 +27,6 @@ public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-        log.info("Starting Indexing Service");
-
         ServiceConfig config = new ServiceConfig();
 
         HazelcastConfig hazelcastConfig = new HazelcastConfig();

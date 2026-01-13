@@ -1,14 +1,13 @@
 services:
-  ingestion1:
+  ingestion-service:
     build:
       context: ./ingestion-service
     image: ingestion-service:latest
-    container_name: ingestion1
+    container_name: ingestion-service
     ports:
       - "5701:5701"
     command: ['datalake']
     environment:
-      #PUBLIC_IP: "" # IP
       HZ_PORT: "5701"
       HZ_PUBLIC_ADDRESS: xxx:5701
       HZ_MEMBERS: xxx:5701
@@ -20,17 +19,18 @@ services:
       - ./mnt/datalake:/app/datalake
     networks:
       - search_net
+    profiles:
+      - backend
 
-  indexing1:
+  indexing-service:
     build:
       context: ./indexing-service
     image: indexing-service:latest
-    container_name: indexing1
+    container_name: indexing-service
     ports:
       - "5702:5702"
     command: ['datalake']
     environment:
-      #PUBLIC_IP: "" # IP
       HZ_PORT: "5702"
       HZ_PUBLIC_ADDRESS: xxx:5702
       HZ_MEMBERS: xxx:5701
@@ -38,30 +38,30 @@ services:
       BROKER_URL: tcp://xxx:61616
     volumes:
       - ./mnt/datalake:/app/datalake
-    depends_on:
-      - ingestion1
     networks:
       - search_net
+    profiles:
+      - backend
 
-  search1:
+  search-service:
     build:
       context: ./search-service
     image: search-service:latest
+    container_name: search-service
     ports:
       - "5703:5703"
       - "7003:7003"
     environment:
-      #PUBLIC_IP: "" #IP
       HZ_PORT: "5703"
       SERVICE_PORT: "7003"
       HZ_PUBLIC_ADDRESS: xxx:5703
       HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
       SORTING_CRITERIA: "frequency" #frequency or id
-    depends_on:
-      - indexing1
     networks:
       - search_net
+    profiles:
+      - backend
 
   benchmark:
     build:
@@ -78,29 +78,8 @@ services:
       HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
       BROKER_URL: tcp://xxx:61616
-    depends_on:
-      - ingestion1
-      - indexing1
     networks:
       - search_net
-
-
-#  indexing2:
-#    build:
-#      context: ./indexing-service
-#    image: indexing-service:latest
-#    container_name: indexing2
-#    ports:
-#      - "5703:5703"
-#    environment:
-#      PUBLIC_IP: "" #IP
-#      HZ_PORT: "5703"
-#      BROKER_URL: tcp://xxx:61616
-#      HAZELCAST_CLUSTER_NAME: SearchEngine
-#    depends_on:
-#      - ingestion1
-#    networks:
-#      - search_net
 
   activemq:
     image: rmohr/activemq:latest
@@ -124,8 +103,6 @@ services:
       - "8080:80"
     volumes:
       - ./search-service/nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - search1
     networks:
       - search_net
     profiles:
