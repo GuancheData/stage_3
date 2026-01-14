@@ -1,9 +1,6 @@
 package com.guanchedata.infrastructure.config;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.JoinConfig;
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.config.NetworkConfig;
+import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
@@ -23,6 +20,21 @@ public class HazelcastConfig {
                 .setBackupCount(2)
                 .setAsyncBackupCount(1);
         config.addMapConfig(mapCfg2);
+
+        QueueConfig queueCfg = new QueueConfig("books")
+                .setBackupCount(2)
+                .setAsyncBackupCount(1);
+        config.addQueueConfig(queueCfg);
+
+        SetConfig setConfig = new SetConfig("indexingRegistry")
+                .setBackupCount(2)
+                .setAsyncBackupCount(1);
+        config.addSetConfig(setConfig);
+
+        SetConfig setConfig2 = new SetConfig("log")
+                .setBackupCount(2)
+                .setAsyncBackupCount(1);
+        config.addSetConfig(setConfig2);
 
         MapConfig mapCfg3 = new MapConfig("datalake")
                 .setBackupCount(2)

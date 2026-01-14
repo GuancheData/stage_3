@@ -13,7 +13,7 @@ services:
       HZ_PUBLIC_ADDRESS: xxx:5701
       HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
-      BROKER_URL: tcp://xxx:61616
+      BROKER_URL: "failover:(tcp://xxx:61616)?randomize=false&startupMaxReconnectAttempts=1&maxReconnectAttempts=10&timeout=3000"
       REPLICATION_FACTOR: 3
       INDEXING_BUFFER_FACTOR: 10
     volumes:
@@ -35,7 +35,7 @@ services:
       HZ_PUBLIC_ADDRESS: xxx:5702
       HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
-      BROKER_URL: tcp://xxx:61616
+      BROKER_URL: "failover:(tcp://xxx:61616)?randomize=false&startupMaxReconnectAttempts=1&maxReconnectAttempts=10&timeout=3000"
     volumes:
       - ./mnt/datalake:/app/datalake
     depends_on:
@@ -77,7 +77,7 @@ services:
       HZ_PUBLIC_ADDRESS: xxx:5704
       HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
-      BROKER_URL: tcp://xxx:61616
+      BROKER_URL: "failover:(tcp://xxx:61616)?randomize=false&startupMaxReconnectAttempts=1&maxReconnectAttempts=10&timeout=3000"
     depends_on:
       - ingestion1
       - indexing1

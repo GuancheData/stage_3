@@ -1,13 +1,8 @@
 package com.guanchedata.infrastructure.adapters.hazelcast;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.JoinConfig;
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.config.NetworkConfig;
+import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-
-import java.util.Arrays;
 
 public class HazelcastConfig {
 
@@ -26,13 +21,33 @@ public class HazelcastConfig {
                 .setAsyncBackupCount(1);
         config.addMapConfig(mapCfg2);
 
+        QueueConfig queueCfg = new QueueConfig("books")
+                .setBackupCount(2)
+                .setAsyncBackupCount(1);
+        config.addQueueConfig(queueCfg);
+
+        SetConfig setConfig = new SetConfig("indexingRegistry")
+                .setBackupCount(2)
+                .setAsyncBackupCount(1);
+        config.addSetConfig(setConfig);
+
+        SetConfig setConfig2 = new SetConfig("log")
+                .setBackupCount(2)
+                .setAsyncBackupCount(1);
+        config.addSetConfig(setConfig2);
+
         MapConfig mapCfg3 = new MapConfig("datalake")
                 .setBackupCount(2)
                 .setAsyncBackupCount(1);
         config.addMapConfig(mapCfg3);
 
-        //config.getNetworkConfig().setPublicAddress(System.getenv("PUBLIC_IP"));
-        //config.getNetworkConfig().setPort(5701);
+        MapConfig mapCfg4= new MapConfig("inverted-index");
+        EvictionConfig evictionConfig = new EvictionConfig()
+                .setEvictionPolicy(EvictionPolicy.NONE);
+        mapCfg4.setEvictionConfig(evictionConfig);
+        mapCfg4.setBackupCount(1);
+        config.addMapConfig(mapCfg4);
+
         NetworkConfig networkConfig = config.getNetworkConfig();
         networkConfig.setPort(Integer.parseInt(System.getenv("HZ_PORT")));
         networkConfig.setPortAutoIncrement(false);

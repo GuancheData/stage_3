@@ -23,9 +23,9 @@ public class Main {
 
         BookStorageDate storageDate = new BookStorageDate(pathGenerator);
         GutenbergBookProvider gutenbergBookProvider = new GutenbergBookProvider(new GutenbergFetch(), new GutenbergConnection(), new GutenbergBookContentSeparator());
-
-        ActiveMQBookIngestedNotifier notifier =  new ActiveMQBookIngestedNotifier(System.getenv("BROKER_URL"));
         HazelcastManager hazelcastManager = new HazelcastManager("SearchEngine", Integer.parseInt(System.getenv("REPLICATION_FACTOR")), gutenbergBookProvider, storageDate);
+
+        ActiveMQBookIngestedNotifier notifier =  new ActiveMQBookIngestedNotifier(System.getenv("BROKER_URL"), hazelcastManager.getHazelcastInstance());
         BookDownloadStatusStore bookDownloadLog = new BookDownloadLog(hazelcastManager.getHazelcastInstance(), "log");
         BookDownloader ingestBookService = new IngestBookService(storageDate, bookDownloadLog, notifier, hazelcastManager, gutenbergBookProvider);
 
