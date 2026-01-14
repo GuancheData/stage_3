@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RebuildMessageListener {
 
@@ -21,12 +22,18 @@ public class RebuildMessageListener {
     private final String brokerUrl;
     private final Gson gson = new Gson();
 
+    private final AtomicBoolean rebuildInProgress = new AtomicBoolean(false);
+
     public RebuildMessageListener(HazelcastInstance hz,
                                   ReindexingExecutor reindexingExecutor,
                                   String brokerUrl) {
         this.hz = hz;
         this.reindexingExecutor = reindexingExecutor;
         this.brokerUrl = brokerUrl;
+    }
+
+    public boolean isRebuildInProgress() {
+        return rebuildInProgress.get();
     }
 
     public void startListening() {
@@ -53,7 +60,7 @@ public class RebuildMessageListener {
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         Topic topic = session.createTopic(REBUILD_TOPIC);
 
-        MessageConsumer consumer = session.createConsumer(topic);
+        jakarta.jms.MessageConsumer consumer = session.createConsumer(topic);
 
         consumer.setMessageListener(message -> {
             try {
@@ -77,10 +84,12 @@ public class RebuildMessageListener {
     private void handleRebuildCommand(RebuildCommand command) {
         log.info("Received rebuild command. Epoch: {}", command.getEpoch());
 
+        rebuildInProgress.set(true);
+
         new Thread(() -> {
             try {
-                log.info("Waiting 5 seconds for all nodes to receive command...");
-                Thread.sleep(5000);
+                log.info("Waiting 10 seconds for all nodes to receive command...");
+                Thread.sleep(10000);
 
                 log.info("Starting rebuild index...");
                 reindexingExecutor.rebuildIndex();
@@ -89,6 +98,12 @@ public class RebuildMessageListener {
 
             } catch (Exception e) {
                 log.error("Error during rebuild", e);
+            } finally {
+                rebuildInProgress.set(false);
+                log.info("Rebuild cleared. Ready to consume messages again.");
+
+                sleep(2000);
+                log.info("Consumer ready to process pending messages");
             }
         }, "Rebuild-Worker").start();
     }

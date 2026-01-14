@@ -42,15 +42,23 @@ public class Main {
 
         IndexingService indexingService = new IndexingService(indexStore, tokenizer, bookStore, hazelcastMetadataStore);
 
-        MessageBrokerConfig brokerConfig = new MessageBrokerConfig();
-        MessageConsumer messageConsumer = brokerConfig.createConsumer(config.getBrokerUrl(), indexingService);
-
         InvertedIndexRecovery invertedIndexRecovery = new InvertedIndexRecovery(args[0], hazelcastInstance, indexingService);
         IngestionQueueManager ingestionQueueManager = new IngestionQueueManager(hazelcastInstance);
         ReindexingExecutor reindexingExecutor = new ReindexingExecutor(invertedIndexRecovery, hazelcastInstance, ingestionQueueManager);
 
-        RebuildMessageListener rebuildListener = new RebuildMessageListener(hazelcastInstance, reindexingExecutor, config.getBrokerUrl());
+        RebuildMessageListener rebuildListener = new RebuildMessageListener(
+                hazelcastInstance,
+                reindexingExecutor,
+                config.getBrokerUrl()
+        );
         rebuildListener.startListening();
+
+        MessageBrokerConfig brokerConfig = new MessageBrokerConfig();
+        MessageConsumer messageConsumer = brokerConfig.createConsumer(
+                config.getBrokerUrl(),
+                indexingService,
+                rebuildListener
+        );
 
         IndexingController controller = new IndexingController(indexingService, reindexingExecutor, config.getBrokerUrl());
 

@@ -16,15 +16,17 @@ public class ActiveMQMessageConsumer implements MessageConsumer {
 
     private final String brokerUrl;
     private final String queueName;
+    private final RebuildMessageListener rebuildListener;
     private final Gson gson = new Gson();
 
     private Connection connection;
     private Session session;
     private jakarta.jms.MessageConsumer consumer;
 
-    public ActiveMQMessageConsumer(String brokerUrl, String queueName) {
+    public ActiveMQMessageConsumer(String brokerUrl, String queueName, RebuildMessageListener rebuildListener) {
         this.brokerUrl = brokerUrl;
         this.queueName = queueName;
+        this.rebuildListener = rebuildListener;
     }
 
     @Override
@@ -40,19 +42,60 @@ public class ActiveMQMessageConsumer implements MessageConsumer {
                 connection = factory.createConnection();
                 connection.start();
 
-                session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+                session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
                 Destination queue = session.createQueue(queueName);
                 consumer = session.createConsumer(queue);
 
                 consumer.setMessageListener(message -> {
+                    String bookId = null;
                     try {
                         if (message instanceof TextMessage textMessage) {
                             String text = textMessage.getText();
-                            String bookId = extractBookId(text);
-                            messageHandler.accept(bookId);
+                            bookId = extractBookId(text);
+
+                            if (rebuildListener != null && rebuildListener.isRebuildInProgress()) {
+                                log.warn("Rebuild in progress. Message will be redelivered later");
+                                session.recover();
+                                return;
+                            }
+
+                            int attempts = 0;
+                            int maxAttempts = 3;
+                            Exception lastException = null;
+
+                            while (attempts < maxAttempts) {
+                                try {
+                                    messageHandler.accept(bookId);
+                                    message.acknowledge();
+                                    return;
+
+                                } catch (Exception e) {
+                                    attempts++;
+                                    lastException = e;
+
+                                    if (isBookNotFoundException(e)) {
+                                        if (attempts < maxAttempts) {
+                                            log.warn("Book {} not found (attempt {}/{}), retrying in 2s...",
+                                                    bookId, attempts, maxAttempts);
+                                            sleep(2000);
+                                        } else {
+                                            log.error("Book {} not found after {} attempts, skipping", bookId, maxAttempts);
+                                            message.acknowledge();
+                                            return;
+                                        }
+                                    } else {
+                                        throw e;
+                                    }
+                                }
+                            }
                         }
-                    } catch (JMSException e) {
-                        log.error("Error processing message", e);
+                    } catch (Exception e) {
+                        log.error("Error processing message for book {}", bookId, e);
+                        try {
+                            session.recover();
+                        } catch (JMSException ex) {
+                            log.error("Failed to recover session", ex);
+                        }
                     }
                 });
 
@@ -67,6 +110,22 @@ public class ActiveMQMessageConsumer implements MessageConsumer {
         }
     }
 
+    private boolean isBookNotFoundException(Exception e) {
+        if (e.getMessage() != null && e.getMessage().contains("Book not found")) {
+            return true;
+        }
+
+        Throwable cause = e.getCause();
+        while (cause != null) {
+            if (cause.getMessage() != null && cause.getMessage().contains("Book not found")) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+
+        return false;
+    }
+
     private void cleanup() {
         try { if (consumer != null) consumer.close(); } catch (Exception ignored) {}
         try { if (session != null) session.close(); } catch (Exception ignored) {}
@@ -78,7 +137,6 @@ public class ActiveMQMessageConsumer implements MessageConsumer {
             Thread.sleep(ms);
         } catch (InterruptedException ignored) {}
     }
-
 
     private String extractBookId(String jsonMessage) {
         try {
