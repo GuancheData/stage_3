@@ -3,6 +3,7 @@ package com.guanchedata;
 import com.guanchedata.application.usecases.indexingservice.IndexingController;
 import com.guanchedata.infrastructure.adapters.apiservices.IndexingService;
 import com.guanchedata.infrastructure.adapters.bookstore.HazelcastBookStore;
+import com.guanchedata.infrastructure.adapters.broker.RebuildMessageListener;
 import com.guanchedata.infrastructure.adapters.indexstore.HazelcastIndexStore;
 import com.guanchedata.infrastructure.adapters.metadata.HazelcastMetadataStore;
 import com.guanchedata.infrastructure.adapters.metadata.MetadataParser;
@@ -39,20 +40,40 @@ public class Main {
 
         IndexingService indexingService = new IndexingService(indexStore, tokenizer, bookStore, hazelcastMetadataStore);
 
-        MessageBrokerConfig brokerConfig = new MessageBrokerConfig();
-        MessageConsumer messageConsumer = brokerConfig.createConsumer(config.getBrokerUrl(), indexingService);
-
-        // ------------------------
-
         InvertedIndexRecovery invertedIndexRecovery = new InvertedIndexRecovery(args[0], hazelcastInstance, indexingService);
         IngestionQueueManager ingestionQueueManager = new IngestionQueueManager(hazelcastInstance);
         ReindexingExecutor reindexingExecutor = new ReindexingExecutor(invertedIndexRecovery, hazelcastInstance, ingestionQueueManager);
 
-        IndexingController controller = new IndexingController(indexingService, reindexingExecutor);
+        RebuildMessageListener rebuildListener = new RebuildMessageListener(
+                hazelcastInstance,
+                reindexingExecutor,
+                config.getBrokerUrl()
+        );
+        rebuildListener.startListening();
+
+        MessageBrokerConfig brokerConfig = new MessageBrokerConfig();
+        MessageConsumer messageConsumer = brokerConfig.createConsumer(
+                config.getBrokerUrl(),
+                indexingService,
+                rebuildListener
+        );
+
+        IndexingController controller = new IndexingController(indexingService, reindexingExecutor, config.getBrokerUrl());
 
         Gson gson = new Gson();
+        Javalin app = createJavalinApp(gson, config.getPort());
 
-        Javalin app = Javalin.create(cfg -> {
+        reindexingExecutor.executeRecovery();
+
+        app.post("/index/document/{documentId}", controller::indexDocument);
+        app.post("/index/rebuild", controller::rebuild);
+        app.get("/health", controller::health);
+
+        log.info("Indexing Service running on port {}\n", config.getPort());
+    }
+
+    private static Javalin createJavalinApp(Gson gson, int port) {
+        return Javalin.create(cfg -> {
             cfg.jsonMapper(new JsonMapper() {
                 @Override
                 public String toJsonString(Object obj, Type type) {
@@ -65,13 +86,6 @@ public class Main {
                 }
             });
             cfg.http.defaultContentType = "application/json";
-        }).start(config.getPort());
-
-        reindexingExecutor.executeRecovery();
-
-        app.post("/index/document/{documentId}", controller::indexDocument);
-        app.post("/index/rebuild", controller::rebuild);
-
-        log.info("Indexing Service running on port {}\n", config.getPort());
+        }).start(port);
     }
 }

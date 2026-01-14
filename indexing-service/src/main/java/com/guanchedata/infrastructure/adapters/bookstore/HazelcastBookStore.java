@@ -19,9 +19,16 @@ public class HazelcastBookStore implements BookStore {
     @Override
     public String[] getBookContent(int bookId) {
         try {
+            log.info("Searching book {} in Hazelcast. Total books in datalake: {}", bookId, datalake.size());
+
             BookContent book = this.datalake.get(bookId);
             if (book == null) {
-                log.error("Book not found in Hazelcast datalake: {}", bookId);
+                log.error("Book {} not found in Hazelcast datalake", bookId);
+                log.error("Available book IDs around {}: {}", bookId,
+                        datalake.keySet().stream()
+                                .filter(id -> id >= bookId - 5 && id <= bookId + 5)
+                                .sorted()
+                                .toList());
                 throw new RuntimeException("Book not found in Hazelcast: " + bookId);
             }
 
@@ -33,4 +40,3 @@ public class HazelcastBookStore implements BookStore {
         }
     }
 }
-

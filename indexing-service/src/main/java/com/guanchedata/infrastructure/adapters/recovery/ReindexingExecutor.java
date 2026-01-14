@@ -20,11 +20,13 @@ public class ReindexingExecutor {
     }
 
     public void rebuildIndex() {
+        this.hz.getSet("log").clear();
         this.hz.getSet("indexingRegistry").clear();
         this.hz.getMultiMap("inverted-index").clear();
         this.hz.getMap("bookMetadata").clear();
-        this.invertedIndexRecovery.executeRecovery();
         //this.hz.getQueue("books").clear(); // ???????????
+        this.invertedIndexRecovery.executeRecovery();
+
     }
 
 
