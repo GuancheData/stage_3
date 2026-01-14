@@ -45,7 +45,7 @@ public class BookIngestionPeriodicExecutor {
                 else {
                     Integer bookId = queue.poll(100, TimeUnit.MILLISECONDS);
                     if (bookId != null && !this.indexingRegistry.contains(bookId)) {
-                        System.out.println("\nIngesting book: " + bookId);
+                        System.out.println("Ingesting book: " + bookId);
                         Map<String, Object> result = ingestBookService.ingest(bookId);
                         System.out.println("Result: " + result);
                     }

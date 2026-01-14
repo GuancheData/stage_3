@@ -37,7 +37,6 @@ public class SearchController {
             }
         }
 
-        System.out.println("---------------------------------------------------------------------------------------\n");
         log.info(String.format("Search: q='%s', author='%s', language='%s', year=%s",
                 query, author, language, year));
 

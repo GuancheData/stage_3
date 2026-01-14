@@ -30,7 +30,7 @@ public class IngestBookService implements BookDownloader {
 
     @Override
     public Map<String, Object> ingest(int bookId) {
-        log.info("ingest() - Start processing bookId={}", bookId);
+        log.info("\ningest() - Start processing bookId={}", bookId);
         try {
             if (bookDownloadLog.isDownloaded(bookId)) {
                 return alreadyDownloadedResponse(bookId);
