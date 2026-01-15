@@ -5,9 +5,6 @@ import com.guanchedata.model.NodeInfoProvider;
 import com.guanchedata.model.BookReplicationCommand;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.multimap.MultiMap;
-
-import java.util.List;
 
 public class HazelcastReplicationExecuter implements ReplicationExecuter {
 
@@ -22,14 +19,11 @@ public class HazelcastReplicationExecuter implements ReplicationExecuter {
     }
 
     public void execute(int bookId) {
-        addBookLocation(bookId);
         replicate(bookId);
     }
 
     @Override
     public void replicate(int bookId) {
-        //FencedLock lock = hazelcast.getCPSubsystem().getLock("lock:book:" + bookId);
-        //lock.lock();
         IQueue<BookReplicationCommand> booksToBeReplicated = hazelcast.getQueue("booksToBeReplicated");
         try {
             for (int i = 1; i < replicationFactor; i++) {
@@ -37,14 +31,7 @@ public class HazelcastReplicationExecuter implements ReplicationExecuter {
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
-        } finally {
-            //lock.unlock();
         }
-    }
-
-    public void addBookLocation(int bookId) {
-        MultiMap<Integer,NodeInfoProvider> bookLocations = this.hazelcast.getMultiMap("bookLocations");
-        bookLocations.put(bookId, this.nodeInfoProvider);
     }
 
 }

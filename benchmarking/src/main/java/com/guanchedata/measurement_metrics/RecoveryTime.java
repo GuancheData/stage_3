@@ -8,7 +8,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.cluster.MembershipEvent;
 import com.hazelcast.cluster.MembershipListener;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.cp.IAtomicReference;
+import com.hazelcast.cp.IAtomicLong;
 
 public class RecoveryTime {
 
@@ -63,13 +63,12 @@ public class RecoveryTime {
 
         System.out.println("\n>>> CLUSTER IS SAFE.");
 
-        IAtomicReference<Boolean> measuring = hz.getCPSubsystem().getAtomicReference("recovery-measuring-lock");
-        measuring.compareAndSet(null,false);
+        IAtomicLong measuring = hz.getCPSubsystem().getAtomicLong("recovery-measuring-lock");
 
         hz.getCluster().addMembershipListener(new MembershipListener() {
             @Override
             public void memberRemoved(MembershipEvent event) {
-                if (measuring.compareAndSet(false, true)) {
+                if (measuring.compareAndSet(0, 1)) {
                     System.out.println("!!! MEMBER REMOVED: " + event.getMember());
                     long startTime = System.currentTimeMillis();
                     measureRecovery(hz, startTime, measuring);
@@ -85,7 +84,7 @@ public class RecoveryTime {
         Thread.currentThread().join();
     }
 
-    private static void measureRecovery(HazelcastInstance hz, long startTime, IAtomicReference<Boolean> measuring) {
+    private static void measureRecovery(HazelcastInstance hz, long startTime, IAtomicLong measuring) {
         new Thread(() -> {
             try {
                 while (!hz.getPartitionService().isClusterSafe()) {
@@ -99,7 +98,7 @@ public class RecoveryTime {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }finally {
-                measuring.set(false);
+                measuring.set(0);
             }
         }).start();
     }

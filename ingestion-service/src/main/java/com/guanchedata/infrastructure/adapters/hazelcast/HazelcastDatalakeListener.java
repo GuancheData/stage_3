@@ -9,7 +9,6 @@ import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
-import com.hazelcast.multimap.MultiMap;
 
 public class HazelcastDatalakeListener {
 
@@ -53,14 +52,8 @@ public class HazelcastDatalakeListener {
     private void saveRetrievedBook(int bookId) {
         try {
             this.bookStorageDate.save(bookId,this.bookProvider.getBook(bookId));
-            addBookLocation(bookId);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void addBookLocation(int bookId) {
-        MultiMap<Integer,NodeInfoProvider> bookLocations = this.hazelcast.getMultiMap("bookLocations");
-        bookLocations.put(bookId, this.nodeInfoProvider);
     }
 }

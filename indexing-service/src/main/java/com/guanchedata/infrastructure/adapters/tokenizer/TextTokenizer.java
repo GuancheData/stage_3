@@ -10,9 +10,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TextTokenizer implements Tokenizer {
+    private static final Pattern CLEANUP_PATTERN = Pattern.compile("[^a-z0-9\\s]");
+    private static final Pattern SPLIT_PATTERN = Pattern.compile("\\s+");
+
     private static final Logger log = LoggerFactory.getLogger(TextTokenizer.class);
     private final Set<String> stopwords;
 
@@ -49,11 +53,12 @@ public class TextTokenizer implements Tokenizer {
             return new ArrayList<>();
         }
 
-        return Arrays.stream(text.toLowerCase()
-                        .replaceAll("[^a-z0-9\\s]", " ")
-                        .split("\\s+"))
+        String cleaned = CLEANUP_PATTERN.matcher(text.toLowerCase()).replaceAll(" ");
+        String[] tokens = SPLIT_PATTERN.split(cleaned);
+
+        return Arrays.stream(tokens)
                 .parallel()
-                .filter(token -> !token.isEmpty())
+                .filter(token -> ! token.isEmpty())
                 .filter(token -> token.length() > 2)
                 .filter(token -> !stopwords.contains(token))
                 .collect(Collectors.toList());

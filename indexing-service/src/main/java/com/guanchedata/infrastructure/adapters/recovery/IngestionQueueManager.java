@@ -2,24 +2,20 @@ package com.guanchedata.infrastructure.adapters.recovery;
 
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.cp.IAtomicReference;
+import com.hazelcast.cp.IAtomicLong;
 
 public class IngestionQueueManager {
 
     private IQueue<Integer> queue;
-    private IAtomicReference<Boolean> queueInitialized;
+    private IAtomicLong queueInitialized;
 
     public IngestionQueueManager(HazelcastInstance hz) {
         this.queue = hz.getQueue("books");
-        this.queueInitialized = hz.getCPSubsystem().getAtomicReference("queueInitialized");
-
-        if (queueInitialized.get() == null) {
-            queueInitialized.set(false);
-        }
+        this.queueInitialized = hz.getCPSubsystem().getAtomicLong("queueInitialized");
     }
 
     public void setupBookQueue(int startReference) {
-        if (!queueInitialized.compareAndSet(false, true)) {
+        if (!queueInitialized.compareAndSet(0, 1)) {
             System.out.println("Queue already initialized by another node");
             return;
         }
