@@ -4,6 +4,9 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.IAtomicReference;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class IngestionQueueManager {
 
     private IQueue<Integer> queue;
@@ -32,35 +35,30 @@ public class IngestionQueueManager {
         System.out.println("Initializing queue from " + (maxBookId + 1));
 
         int batchSize = 1000;
+        List<Integer> batch = new ArrayList<>(batchSize);
         int added = 0;
-        long start = System.currentTimeMillis();
 
-        for (int i = maxBookId + 1; i <= 100000; i += batchSize) {
-            int end = Math.min(i + batchSize - 1, 100000);
+        for (int i = maxBookId + 1; i <= 100000; i ++) {
+            batch.add(i);
+            if (batch.size() == batchSize || i == 100000) {
+                boolean batchInserted = false;
+                while (!batchInserted) {
+                    try {
+                        batchInserted = queue.addAll(batch);
 
-            boolean allAdded = true;
-            for (int bookId = i; bookId <= end; bookId++) {
-                if (!queue.offer(bookId)) {
-                    allAdded = false;
-                    break;
+                        if (!batchInserted) {
+                            Thread.sleep(1000);
+                        }
+                    } catch (Exception e) {
+                        try { Thread.sleep(2000); } catch (InterruptedException ex) {}
+                    }
                 }
-                added++;
-            }
 
-            if (!allAdded) {
-                System.out.println("Queue full in book " + i + ", pausing...");
-                try { Thread.sleep(5000); } catch (InterruptedException e) {}
-                continue;
-            }
-
-            if (added % 10000 == 0) {
-                long elapsed = System.currentTimeMillis() - start;
-                double rate = added * 1000.0 / elapsed;
-                System.out.printf("[Queue: %d/%d added (%.1f/sec)]%n", added, 100000-maxBookId, rate);
+                added += batch.size();
+                System.out.printf("[Queue: %d added (Batch insert)]%n", added);
+                batch.clear();
             }
         }
-
-        System.out.printf("Queue COMPLETED: %d books in %.1fs (%.1f/sec)%n",
-                added, (System.currentTimeMillis() - start) / 1000.0, added * 1000.0 / (System.currentTimeMillis() - start));
+        System.out.printf("Queue COMPLETED: %d books", added);
     }
 }
