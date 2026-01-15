@@ -1,8 +1,8 @@
 package com.guanchedata.model;
 
 public class BookContent {
-    private final String header;
-    private final String body;
+    private String header;
+    private String body;
 
     public BookContent(String header, String body) {
         this.header = header;
