@@ -2,6 +2,7 @@ package com.guanchedata.application.usecases.indexingservice;
 
 import com.google.gson.Gson;
 import com.guanchedata.infrastructure.adapters.apiservices.IndexingService;
+import com.guanchedata.infrastructure.adapters.broker.ActiveMQIngestionControlPublisher;
 import com.guanchedata.infrastructure.adapters.recovery.ReindexingExecutor;
 import com.guanchedata.model.RebuildCommand;
 import io.javalin.http.Context;
@@ -49,6 +50,10 @@ public class IndexingController {
         log.info("Broadcasting rebuild command to all nodes");
 
         try {
+            ActiveMQIngestionControlPublisher controlPublisher = new ActiveMQIngestionControlPublisher(brokerUrl);
+            controlPublisher.publishPause();
+            log.info("Ingestion Paused");
+
             ConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
             Connection connection = factory.createConnection();
             connection.start();
@@ -71,6 +76,9 @@ public class IndexingController {
                     "status", "success",
                     "message", "Rebuild broadcast to all indexer nodes"
             ));
+
+            controlPublisher.publishResume();
+            log.info("Ingestion Resumed");
         } catch (Exception e) {
             log.error("Error broadcasting rebuild: {}", e.getMessage());
             ctx.status(500).json(Map.of(
