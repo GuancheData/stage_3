@@ -7,7 +7,6 @@ import com.guanchedata.infrastructure.adapters.apiservices.BookStatusService;
 import com.guanchedata.infrastructure.adapters.apiservices.IngestBookService;
 import com.guanchedata.infrastructure.adapters.apiservices.ListBooksService;
 import com.guanchedata.infrastructure.adapters.bookprovider.*;
-import com.guanchedata.infrastructure.adapters.hazelcast.DatalakeRecoveryNotifier;
 import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastManager;
 import com.guanchedata.infrastructure.ports.*;
 import com.guanchedata.util.DateTimePathGenerator;
@@ -39,9 +38,6 @@ public class Main {
                 bookStatusService
         );
 
-//        DatalakeRecoveryNotifier recovery = new DatalakeRecoveryNotifier(hazelcastManager.getHazelcastInstance(), hazelcastManager.getNodeInfoProvider(), notifier);
-//        recovery.reloadDatalakeFromDisk(args[0]);
-        ////////
         BookIngestionPeriodicExecutor bookIngestionExecutor = new BookIngestionPeriodicExecutor(hazelcastManager.getHazelcastInstance(),ingestBookService);
 
         Javalin app = Javalin.create(config -> {

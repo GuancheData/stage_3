@@ -9,10 +9,10 @@ services:
     command: ['datalake']
     environment:
       HZ_PORT: "5701"
-      HZ_PUBLIC_ADDRESS: 192.168.1.45:5701
-      HZ_MEMBERS: 192.168.1.45:5701
+      HZ_PUBLIC_ADDRESS: xxx:5701
+      HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
-      BROKER_URL: tcp://192.168.1.45:61616
+      BROKER_URL: tcp://xxx:61616
       REPLICATION_FACTOR: 3
       INDEXING_BUFFER_FACTOR: 10
     volumes:
@@ -32,10 +32,10 @@ services:
     command: ['datalake']
     environment:
       HZ_PORT: "5702"
-      HZ_PUBLIC_ADDRESS: 192.168.1.45:5702
-      HZ_MEMBERS: 192.168.1.45:5701
+      HZ_PUBLIC_ADDRESS: xxx:5702
+      HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
-      BROKER_URL: tcp://192.168.1.45:61616
+      BROKER_URL: tcp://xxx:61616
     volumes:
       - ./mnt/datalake:/app/datalake
     networks:
@@ -54,8 +54,8 @@ services:
     environment:
       HZ_PORT: "5703"
       SERVICE_PORT: "7003"
-      HZ_PUBLIC_ADDRESS: 192.168.1.45:5703
-      HZ_MEMBERS: 192.168.1.45:5701
+      HZ_PUBLIC_ADDRESS: xxx:5703
+      HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
       SORTING_CRITERIA: "frequency" #frequency or id
     networks:
