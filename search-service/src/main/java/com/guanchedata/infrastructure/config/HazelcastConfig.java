@@ -11,15 +11,12 @@ public class HazelcastConfig {
         Config config = new Config();
         config.setClusterName(clusterName);
 
-        EvictionConfig evictionConfig = new EvictionConfig()
-                .setEvictionPolicy(EvictionPolicy.NONE);
         NearCacheConfig nearCacheConfig = new NearCacheConfig()
                 .setName("inverted-index-near-cache")
                 .setInvalidateOnChange(true);
         MapConfig mapCfg = new MapConfig("inverted-index")
                 .setBackupCount(2)
                 .setAsyncBackupCount(1)
-                .setEvictionConfig(evictionConfig)
                 .setNearCacheConfig(nearCacheConfig);
         config.addMapConfig(mapCfg);
 

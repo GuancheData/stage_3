@@ -2,7 +2,7 @@ package com.guanchedata.infrastructure.adapters.indexstore;
 
 import com.guanchedata.infrastructure.ports.IndexStore;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.multimap.MultiMap;
+import com.hazelcast.map.IMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Collection;
@@ -11,10 +11,10 @@ import java.util.Set;
 
 public class HazelcastIndexStore implements IndexStore {
     private static final Logger log = LoggerFactory.getLogger(HazelcastIndexStore.class);
-    private final MultiMap<String, String> invertedIndex;
+    private final IMap<String, Set<String>> invertedIndex;
 
     public HazelcastIndexStore(HazelcastInstance hazelcastInstance) {
-        this.invertedIndex = hazelcastInstance.getMultiMap("inverted-index");
+        this.invertedIndex = hazelcastInstance.getMap("inverted-index");
         log.info("Connected to Hazelcast inverted index");
     }
 
