@@ -1,8 +1,7 @@
 package com.guanchedata.model;
 
-import java.io.Serializable;
 
-public class RebuildCommand implements Serializable {
+public class RebuildCommand {
     private long epoch;
 
     public RebuildCommand(long epoch) {

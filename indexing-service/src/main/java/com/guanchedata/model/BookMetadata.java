@@ -1,15 +1,11 @@
 package com.guanchedata.model;
 
-import java.io.Serializable;
-
-public class BookMetadata implements Serializable {
+public class BookMetadata {
 
     private String title;
     private String author;
     private String language;
     private Integer year;
-
-    public BookMetadata() {}
 
     public BookMetadata(String title, String author, String language, Integer year) {
         this.title = title;

@@ -1,5 +1,6 @@
 package com.guanchedata.infrastructure.config;
 
+import com.guanchedata.model.BookMetadataSerializer;
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -10,6 +11,10 @@ public class HazelcastConfig {
 
         Config config = new Config();
         config.setClusterName(clusterName);
+
+        config.getSerializationConfig()
+                .getCompactSerializationConfig()
+                .addSerializer(new BookMetadataSerializer());
 
         NearCacheConfig nearCacheConfig = new NearCacheConfig()
                 .setName("inverted-index-near-cache")

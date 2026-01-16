@@ -1,5 +1,7 @@
 package com.guanchedata.infrastructure.config;
 
+import com.guanchedata.model.BookContentSerializer;
+import com.guanchedata.model.BookMetadataSerializer;
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -12,6 +14,12 @@ public class HazelcastConfig {
 
         config.getMemberAttributeConfig()
                 .setAttribute("role", "indexer");
+
+        config.getSerializationConfig()
+                .getCompactSerializationConfig()
+                .addSerializer(new BookContentSerializer())
+                .addSerializer(new BookMetadataSerializer());
+
 
         MapConfig mapCfg = new MapConfig("inverted-index")
                 .setBackupCount(2)

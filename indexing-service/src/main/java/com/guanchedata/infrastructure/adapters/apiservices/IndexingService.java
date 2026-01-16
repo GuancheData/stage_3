@@ -4,6 +4,7 @@ import com.guanchedata.infrastructure.adapters.metadata.HazelcastMetadataStore;
 import com.guanchedata.infrastructure.ports.BookStore;
 import com.guanchedata.infrastructure.ports.IndexStore;
 import com.guanchedata.infrastructure.ports.Tokenizer;
+import com.hazelcast.core.HazelcastInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,12 +22,14 @@ public class IndexingService {
     private final Tokenizer tokenizer;
     private final BookStore bookStore;
     private final HazelcastMetadataStore hazelcastMetadataStore;
+    private final HazelcastInstance hz;
 
-    public IndexingService(IndexStore indexStore, Tokenizer tokenizer, BookStore bookStore, HazelcastMetadataStore hazelcastMetadataStore) {
+    public IndexingService(IndexStore indexStore, Tokenizer tokenizer, BookStore bookStore, HazelcastMetadataStore hazelcastMetadataStore, HazelcastInstance hz) {
         this.indexStore = indexStore;
         this.tokenizer = tokenizer;
         this.bookStore = bookStore;
         this.hazelcastMetadataStore = hazelcastMetadataStore;
+        this.hz = hz;
     }
 
     public void indexDocument(int documentId) {
@@ -37,7 +40,7 @@ public class IndexingService {
             indexResolvedDocument(documentId, content[0], content[1]);
 
         } catch (Exception e) {
-            log.error("Error indexing document {}: {}", documentId, e.getMessage(), e);
+            log.error("Error indexing document {}: {}", documentId, e.getMessage());
             throw new RuntimeException("Failed to index document: " + documentId, e);
         }
     }
@@ -53,11 +56,16 @@ public class IndexingService {
     }
 
     public void indexResolvedDocument(int documentId, String header, String body) {
-        registerIndexAction(documentId);
-        int tokenCount = generateInvertedIndex(body, documentId);
-        hazelcastMetadataStore.saveMetadata(documentId, header);
+        if(hz.getSet("indexingRegistry").add(documentId)){
+            registerIndexAction(documentId);
+            int tokenCount = generateInvertedIndex(body, documentId);
+            hazelcastMetadataStore.saveMetadata(documentId, header);
 
-        log.info("Done indexing for document: {}. Token count: {}\n", documentId, tokenCount);
+            log.info("Done indexing for document: {}. Token count: {}\n", documentId, tokenCount);
+
+        } else {
+            log.info("Document {} already indexed (or in process), skipping.", documentId);
+        }
     }
 
     private int generateInvertedIndex(String body, int documentId) {

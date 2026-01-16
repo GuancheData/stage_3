@@ -2,9 +2,12 @@ package com.guanchedata.infrastructure.adapters.hazelcast;
 
 import com.guanchedata.infrastructure.ports.ReplicationExecuter;
 import com.guanchedata.model.NodeInfoProvider;
-import com.guanchedata.model.BookReplicationCommand;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class HazelcastReplicationExecuter implements ReplicationExecuter {
 
@@ -19,19 +22,32 @@ public class HazelcastReplicationExecuter implements ReplicationExecuter {
     }
 
     public void execute(int bookId) {
+        addLocalNodeToReplicatedMap(bookId);
         replicate(bookId);
+    }
+
+    private void addLocalNodeToReplicatedMap(int bookId) {
+        IMap<Integer, Set<String>> replicatedNodesMap = hazelcast.getMap("replicatedNodesMap");
+
+        replicatedNodesMap.lock(bookId);
+        try {
+            Set<String> nodes = replicatedNodesMap.getOrDefault(bookId, new HashSet<>());
+            nodes.add(nodeInfoProvider.getNodeId());
+            replicatedNodesMap.put(bookId, nodes);
+        } finally {
+            replicatedNodesMap.unlock(bookId);
+        }
     }
 
     @Override
     public void replicate(int bookId) {
-        IQueue<BookReplicationCommand> booksToBeReplicated = hazelcast.getQueue("booksToBeReplicated");
+        IQueue<Integer> booksToBeReplicated = hazelcast.getQueue("booksToBeReplicated");
         try {
             for (int i = 1; i < replicationFactor; i++) {
-                booksToBeReplicated.put(new BookReplicationCommand(bookId, this.nodeInfoProvider.getNodeId()));
+                booksToBeReplicated.put(bookId);
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
-
 }

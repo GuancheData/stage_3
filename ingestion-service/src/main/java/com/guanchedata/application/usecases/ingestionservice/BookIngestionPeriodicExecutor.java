@@ -29,7 +29,7 @@ public class BookIngestionPeriodicExecutor {
 
     public void startPeriodicExecution() {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleWithFixedDelay(this::execute, 0, 5, TimeUnit.MILLISECONDS);
+        scheduler.scheduleWithFixedDelay(this::execute, 0, 1, TimeUnit.SECONDS);
     }
 
     private static final long RECOVERY_LOG_INTERVAL_MS = 20_000;

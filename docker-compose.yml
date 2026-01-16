@@ -13,8 +13,8 @@ services:
       HZ_MEMBERS: xxx:5701
       HAZELCAST_CLUSTER_NAME: SearchEngine
       BROKER_URL: tcp://xxx:61616
-      REPLICATION_FACTOR: 3
-      INDEXING_BUFFER_FACTOR: 10
+      REPLICATION_FACTOR: 2
+      INDEXING_BUFFER_FACTOR: 2
     volumes:
       - ./mnt/datalake:/app/datalake
     networks:
