@@ -2,7 +2,6 @@ package com.guanchedata.infrastructure.adapters.recovery;
 
 import com.guanchedata.infrastructure.adapters.apiservices.IndexingService;
 import com.guanchedata.infrastructure.ports.RecoveryExecuter;
-import com.hazelcast.core.HazelcastInstance;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,12 +13,10 @@ public class InvertedIndexRecovery implements RecoveryExecuter {
     // low level classes
     // indexing service
     private final String dataVolumePath;
-    private final HazelcastInstance hz;
     private final IndexingService indexingService;
 
-    public InvertedIndexRecovery (String dataVolumePath, HazelcastInstance hz, IndexingService indexingService) {
+    public InvertedIndexRecovery (String dataVolumePath, IndexingService indexingService) {
         this.dataVolumePath = dataVolumePath;
-        this.hz = hz;
         this.indexingService = indexingService;
     }
 
@@ -39,10 +36,7 @@ public class InvertedIndexRecovery implements RecoveryExecuter {
                 String header = Files.readString(headerPath);
                 String body = Files.readString(bodyPath);
 
-                if (!isAlreadyIndexed(bookId)) { indexingService.indexLocalDocument(bookId, header, body); }
-                else { System.out.println("Book {" + bookId + "} is already indexed. Skipping reindexing from disk..."); }
-            }
-
+                indexingService.indexLocalDocument(bookId, header, body); }
         } catch (IOException e) {
             System.out.println("No local data found in disk");
         }
@@ -56,10 +50,6 @@ public class InvertedIndexRecovery implements RecoveryExecuter {
         int index = filename.indexOf(suffix);
         String idStr = filename.substring(0, index);
         return Integer.parseInt(idStr);
-    }
-
-    public boolean isAlreadyIndexed(int bookId){
-        return this.hz.getSet("indexingRegistry").contains(bookId);
     }
 }
 

@@ -16,13 +16,10 @@ import com.guanchedata.infrastructure.config.MessageBrokerConfig;
 import com.guanchedata.infrastructure.config.ServiceConfig;
 import com.guanchedata.infrastructure.ports.MessageConsumer;
 import com.hazelcast.core.HazelcastInstance;
-import com.google.gson.Gson;
 import io.javalin.Javalin;
-import io.javalin.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
 
 public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
@@ -38,11 +35,13 @@ public class Main {
         TextTokenizer tokenizer = new TextTokenizer();
         HazelcastMetadataStore hazelcastMetadataStore = new HazelcastMetadataStore(hazelcastInstance, new MetadataParser());
 
-        IndexingService indexingService = new IndexingService(indexStore, tokenizer, bookStore, hazelcastMetadataStore);
+        IndexingService indexingService = new IndexingService(indexStore, tokenizer, bookStore, hazelcastMetadataStore, hazelcastInstance);
 
-        InvertedIndexRecovery invertedIndexRecovery = new InvertedIndexRecovery(args[0], hazelcastInstance, indexingService);
+        InvertedIndexRecovery invertedIndexRecovery = new InvertedIndexRecovery(args[0], indexingService);
         IngestionQueueManager ingestionQueueManager = new IngestionQueueManager(hazelcastInstance);
         ReindexingExecutor reindexingExecutor = new ReindexingExecutor(invertedIndexRecovery, hazelcastInstance, ingestionQueueManager);
+
+        reindexingExecutor.executeRecovery();
 
         RebuildMessageListener rebuildListener = new RebuildMessageListener(
                 hazelcastInstance,
@@ -60,32 +59,14 @@ public class Main {
 
         IndexingController controller = new IndexingController(indexingService, reindexingExecutor, config.getBrokerUrl());
 
-        Gson gson = new Gson();
-        Javalin app = createJavalinApp(gson, config.getPort());
-
-        reindexingExecutor.executeRecovery();
+        Javalin app = Javalin.create(config2 -> {
+            config2.http.defaultContentType = "application/json";
+        }).start(7002);
 
         app.post("/index/document/{documentId}", controller::indexDocument);
         app.post("/index/rebuild", controller::rebuild);
         app.get("/health", controller::health);
 
         log.info("Indexing Service running on port {}\n", config.getPort());
-    }
-
-    private static Javalin createJavalinApp(Gson gson, int port) {
-        return Javalin.create(cfg -> {
-            cfg.jsonMapper(new JsonMapper() {
-                @Override
-                public String toJsonString(Object obj, Type type) {
-                    return gson.toJson(obj);
-                }
-
-                @Override
-                public <T> T fromJsonString(String json, Type targetType) {
-                    return gson.fromJson(json, targetType);
-                }
-            });
-            cfg.http.defaultContentType = "application/json";
-        }).start(port);
     }
 }
