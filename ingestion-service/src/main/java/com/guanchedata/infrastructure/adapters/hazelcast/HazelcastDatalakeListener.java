@@ -60,7 +60,6 @@ public class HazelcastDatalakeListener {
         boolean iAlreadyHaveIt = currentOwners != null && currentOwners.contains(myNodeId);
 
         if (iAlreadyHaveIt) {
-            System.out.println("Nodo " + myNodeId + " ya tiene el libro " + bookId + ". Devolviendo tarea.");
             try {
                 Thread.sleep(200);
                 queue.put(bookId);
@@ -70,7 +69,7 @@ public class HazelcastDatalakeListener {
             return;
         }
 
-        System.out.println("Nodo " + myNodeId + " descargando libro " + bookId);
+        System.out.println("Node " + myNodeId + " replicating book:  " + bookId);
         saveRetrievedBook(bookId);
 
         replicatedNodesMap.lock(bookId);
@@ -91,7 +90,6 @@ public class HazelcastDatalakeListener {
         try {
             int count = replicationLog.getOrDefault(bookId, 0);
             replicationLog.put(bookId, count + 1);
-            System.out.println("Total réplicas libro " + bookId + ": " + (count + 1));
         } finally {
             replicationLog.unlock(bookId);
         }

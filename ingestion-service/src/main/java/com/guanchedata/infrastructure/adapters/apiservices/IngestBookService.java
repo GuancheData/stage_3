@@ -50,13 +50,6 @@ public class IngestBookService implements BookDownloader {
         }
     }
 
-//    public String fetchBook(int bookId) throws Exception {
-//        GutenbergConnection connection = new GutenbergConnection();
-//        GutenbergFetch fetch = new GutenbergFetch();
-//        return fetch.fetchBook(connection.createConnection(bookId));
-//    }
-
-
     private Map<String, Object> alreadyDownloadedResponse(int bookId) {
         log.warn("ingest() - Book {} is already downloaded, skipping ingestion", bookId);
         return Map.of(
