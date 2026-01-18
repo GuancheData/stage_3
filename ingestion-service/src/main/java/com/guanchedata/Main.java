@@ -15,10 +15,8 @@ import com.guanchedata.util.DateTimePathGenerator;
 import com.guanchedata.util.GutenbergBookProvider;
 import io.javalin.Javalin;
 
-import java.io.IOException;
-
 public class Main {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 
         PathGenerator pathGenerator = new DateTimePathGenerator(args[0]);
 
@@ -46,11 +44,11 @@ public class Main {
         BookProviderController controller =
                 new BookProviderController(ingestBookService, listBooksService, bookStatusService);
 
-        BookIngestionPeriodicExecutor bookIngestionExecutor =
-                new BookIngestionPeriodicExecutor(hazelcastManager.getHazelcastInstance(),ingestBookService);
         IngestionPauseController pauseController = new IngestionPauseController();
 
-        BookIngestionPeriodicExecutor bookIngestionExecutor = new BookIngestionPeriodicExecutor(hazelcastManager.getHazelcastInstance(),ingestBookService, pauseController);
+        BookIngestionPeriodicExecutor bookIngestionExecutor =
+                new BookIngestionPeriodicExecutor(hazelcastManager.getHazelcastInstance(),ingestBookService, pauseController);
+
 
         Javalin app = Javalin.create(config -> { config.http.defaultContentType = "application/json";})
                 .start(7001);
