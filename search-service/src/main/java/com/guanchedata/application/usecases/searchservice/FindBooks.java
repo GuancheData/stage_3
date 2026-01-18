@@ -1,4 +1,4 @@
-package com.guanchedata.application.searchservice;
+package com.guanchedata.application.usecases.searchservice;
 
 import com.guanchedata.model.SearchCriteria;
 import com.guanchedata.model.BookMetadata;

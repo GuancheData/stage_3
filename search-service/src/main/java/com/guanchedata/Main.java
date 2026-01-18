@@ -1,9 +1,9 @@
 package com.guanchedata;
 
 import com.google.gson.Gson;
-import com.guanchedata.application.searchservice.ContentSearchEngine;
+import com.guanchedata.application.usecases.searchservice.ContentSearchEngine;
 import com.guanchedata.infrastructure.adapters.web.SearchController;
-import com.guanchedata.application.searchservice.FindBooks;
+import com.guanchedata.application.usecases.searchservice.FindBooks;
 import com.guanchedata.infrastructure.adapters.sorter.SortByFrequency;
 import com.guanchedata.infrastructure.adapters.sorter.SortById;
 import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastIndexStore;
