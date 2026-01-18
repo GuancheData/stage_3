@@ -6,23 +6,33 @@ import com.hazelcast.cp.IAtomicLong;
 
 public class IngestionQueueManager {
 
-    private IQueue<Integer> queue;
-    private IAtomicLong queueInitialized;
+    private final IQueue<Integer> queue;
+    private final IAtomicLong queueInitialized;
+    private Thread currentPopulatorThread;
 
     public IngestionQueueManager(HazelcastInstance hz) {
         this.queue = hz.getQueue("books");
         this.queueInitialized = hz.getCPSubsystem().getAtomicLong("queueInitialized");
     }
 
-    public void setupBookQueue(int startReference) {
+    public synchronized void stopPopulation() {
+        if (currentPopulatorThread != null && currentPopulatorThread.isAlive()) {
+            System.out.println("[QueueManager] Stopping existing population thread...");
+            currentPopulatorThread.interrupt();
+        }
+    }
+
+    public synchronized void setupBookQueue(int startReference) {
         if (!queueInitialized.compareAndSet(0, 1)) {
             System.out.println("Queue already initialized by another node");
             return;
         }
 
-        new Thread(() -> populateQueueAsync(startReference), "Queue-Populator").start();
-    }
+        stopPopulation();
 
+        currentPopulatorThread = new Thread(() -> populateQueueAsync(startReference), "Queue-Populator");
+        currentPopulatorThread.start();
+    }
 
     private void populateQueueAsync(int maxBookId) {
         System.out.println("Initializing queue from " + (maxBookId + 1));
@@ -32,10 +42,18 @@ public class IngestionQueueManager {
         long start = System.currentTimeMillis();
 
         for (int i = maxBookId + 1; i <= 100000; i += batchSize) {
-            int end = Math.min(i + batchSize - 1, 100000);
 
+            if (Thread.currentThread().isInterrupted()) {
+                System.out.println("[QueueManager] Population thread interrupted. Stopping.");
+                return;
+            }
+
+            int end = Math.min(i + batchSize - 1, 100000);
             boolean allAdded = true;
+
             for (int bookId = i; bookId <= end; bookId++) {
+                if (Thread.currentThread().isInterrupted()) return;
+
                 if (!queue.offer(bookId)) {
                     allAdded = false;
                     break;
@@ -44,15 +62,21 @@ public class IngestionQueueManager {
             }
 
             if (!allAdded) {
-                System.out.println("Queue full in book " + i + ", pausing...");
-                try { Thread.sleep(5000); } catch (InterruptedException e) {}
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt(); // Restaurar flag de interrupciÃ³n
+                    System.out.println("[QueueManager] Thread interrupted during sleep.");
+                    return;
+                }
+                i -= batchSize;
                 continue;
             }
 
-            if (added % 10000 == 0) {
+            if (added > 0 && added % 10000 == 0) {
                 long elapsed = System.currentTimeMillis() - start;
                 double rate = added * 1000.0 / elapsed;
-                System.out.printf("[Queue: %d/%d added (%.1f/sec)]%n", added, 100000-maxBookId, rate);
+                System.out.printf("[Queue: %d/%d added (%.1f/sec)]%n", added, 100000 - maxBookId, rate);
             }
         }
 

@@ -1,8 +1,11 @@
 package com.guanchedata.infrastructure.adapters.recovery;
 
 import com.hazelcast.core.HazelcastInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReindexingExecutor {
+    private static final Logger log = LoggerFactory.getLogger(ReindexingExecutor.class);
 
     private final InvertedIndexRecovery invertedIndexRecovery;
     private final HazelcastInstance hz;
@@ -15,19 +18,23 @@ public class ReindexingExecutor {
     }
 
     public void executeRecovery(){
-        int startReference = this.invertedIndexRecovery.executeRecovery(); // recovers I.index from disk. does not make conflict with other reindexings
-        this.ingestionQueueManager.setupBookQueue(startReference); // first indexer to finish reindexing creates queue
+        int startReference = this.invertedIndexRecovery.executeRecovery();
+        this.ingestionQueueManager.setupBookQueue(startReference);
     }
 
     public void rebuildIndex() {
+        this.ingestionQueueManager.stopPopulation();
+
         this.hz.getSet("log").clear();
         this.hz.getSet("indexingRegistry").clear();
         this.hz.getMap("inverted-index").clear();
         this.hz.getMap("bookMetadata").clear();
-        //this.hz.getQueue("books").clear(); // ???????????
-        this.invertedIndexRecovery.executeRecovery();
+        this.hz.getQueue("books").clear();
 
+        this.hz.getCPSubsystem().getAtomicLong("queueInitialized").set(0);
+
+        this.executeRecovery();
+
+        log.info("Rebuild completed");
     }
-
-
 }
