@@ -44,7 +44,7 @@ public class IndexBook {
             metadataStore.saveMetadata(documentId, content.getHeader());
 
             indexStore.saveTokens(totalTokens);
-            log.info("Done indexing for document: {}. Token count: {}", documentId, totalTokens);
+            log.info("Done indexing for document: {}. Token count: {}\n", documentId, totalTokens);
         } catch (Exception e) {
             log.error("Error indexing document {}: {}", documentId, e.getMessage());
             throw new RuntimeException("Failed to index document: " + documentId, e);

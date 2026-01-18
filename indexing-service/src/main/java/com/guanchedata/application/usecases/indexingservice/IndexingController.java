@@ -3,6 +3,7 @@ package com.guanchedata.application.usecases.indexingservice;
 import com.google.gson.Gson;
 import com.guanchedata.infrastructure.adapters.recovery.CoordinateRebuild;
 import com.guanchedata.infrastructure.adapters.web.IndexBook;
+import com.guanchedata.model.RebuildResult;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,11 +53,11 @@ public class IndexingController {
     public void rebuild(Context ctx) {
         log.info("WEB: Request received to rebuild index");
         try {
-            CoordinateRebuild.RebuildResult result = rebuildUseCase.execute();
+            RebuildResult result = rebuildUseCase.execute();
 
             ctx.status(200).result(gson.toJson(Map.of(
                     "status", "success",
-                    "message", result.message
+                    "message", result.getMessage()
             )));
         } catch (Exception e) {
             ctx.status(500).result(gson.toJson(Map.of("status", "error", "message", e.getMessage())));

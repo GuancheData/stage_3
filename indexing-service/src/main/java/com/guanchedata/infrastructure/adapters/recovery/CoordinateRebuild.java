@@ -3,6 +3,7 @@ package com.guanchedata.infrastructure.adapters.recovery;
 import com.google.gson.Gson;
 import com.guanchedata.infrastructure.adapters.broker.ActiveMQIngestionControlPublisher;
 import com.guanchedata.model.RebuildCommand;
+import com.guanchedata.model.RebuildResult;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.cp.ICountDownLatch;
 import jakarta.jms.*;
@@ -74,15 +75,6 @@ public class CoordinateRebuild {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        }
-    }
-
-    public static class RebuildResult {
-        public final boolean success;
-        public final String message;
-        public RebuildResult(boolean success, String message) {
-            this.success = success;
-            this.message = message;
         }
     }
 }
