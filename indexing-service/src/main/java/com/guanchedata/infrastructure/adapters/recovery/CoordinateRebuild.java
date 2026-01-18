@@ -29,9 +29,10 @@ public class CoordinateRebuild {
                     .filter(m -> "indexer".equals(m.getAttribute("role")))
                     .count();
 
-            log.info("UseCase: Starting rebuild coordination for {} nodes.", indexerCount);
+            log.info("Starting rebuild coordination for {} nodes.", indexerCount);
 
-            ActiveMQIngestionControlPublisher controlPublisher = new ActiveMQIngestionControlPublisher(brokerUrl);
+            ConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
+            ActiveMQIngestionControlPublisher controlPublisher = new ActiveMQIngestionControlPublisher(factory);
             controlPublisher.publishPause();
 
             ICountDownLatch latch = hz.getCPSubsystem().getCountDownLatch("rebuild-latch");
@@ -50,6 +51,7 @@ public class CoordinateRebuild {
 
     private void broadcastRebuildCommand() throws JMSException {
         ConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
+        ActiveMQIngestionControlPublisher controlPublisher = new ActiveMQIngestionControlPublisher(factory);
         try (Connection connection = factory.createConnection()) {
             connection.start();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);

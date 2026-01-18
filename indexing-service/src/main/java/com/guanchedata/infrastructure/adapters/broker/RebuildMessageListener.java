@@ -4,12 +4,10 @@ import com.google.gson.Gson;
 import com.guanchedata.model.RebuildCommand;
 import com.guanchedata.infrastructure.adapters.recovery.ReindexingExecutor;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.cp.ICountDownLatch; // [NUEVO] Importar el cerrojo distribuido
 import jakarta.jms.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -83,8 +81,6 @@ public class RebuildMessageListener {
     }
 
     private void handleRebuildCommand(RebuildCommand command) {
-        log.info("Received rebuild command. Epoch: {}", command.getEpoch());
-
         rebuildInProgress.set(true);
 
         new Thread(() -> {

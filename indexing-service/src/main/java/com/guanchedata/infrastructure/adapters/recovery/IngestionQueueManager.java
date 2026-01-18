@@ -65,7 +65,7 @@ public class IngestionQueueManager {
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt(); // Restaurar flag de interrupciÃ³n
+                    Thread.currentThread().interrupt();
                     System.out.println("[QueueManager] Thread interrupted during sleep.");
                     return;
                 }

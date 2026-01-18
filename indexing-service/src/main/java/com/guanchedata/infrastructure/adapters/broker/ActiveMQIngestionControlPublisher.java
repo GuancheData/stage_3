@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.guanchedata.infrastructure.ports.IngestionControlPublisher;
 import com.guanchedata.model.IngestionControlEvent;
 import jakarta.jms.*;
-import org.apache.activemq.ActiveMQConnectionFactory;
 
 public class ActiveMQIngestionControlPublisher implements IngestionControlPublisher {
 
@@ -12,8 +11,8 @@ public class ActiveMQIngestionControlPublisher implements IngestionControlPublis
     private final Gson gson = new Gson();
     private static final String TOPIC_NAME = "ingestion.control";
 
-    public ActiveMQIngestionControlPublisher(String brokerUrl) {
-        this.factory = new ActiveMQConnectionFactory(brokerUrl);
+    public ActiveMQIngestionControlPublisher(ConnectionFactory factory) {
+        this.factory = factory;
     }
 
     public void publishPause() {
@@ -31,7 +30,7 @@ public class ActiveMQIngestionControlPublisher implements IngestionControlPublis
             Topic topic = session.createTopic(TOPIC_NAME);
 
             MessageProducer producer = session.createProducer(topic);
-            producer.setDeliveryMode(DeliveryMode.PERSISTENT); // If one node is not on at the time, it still gets the message
+            producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
             IngestionControlEvent event = new IngestionControlEvent(type);
 
