@@ -1,6 +1,6 @@
 package com.guanchedata.infrastructure.adapters.recovery;
 
-import com.guanchedata.infrastructure.adapters.apiservices.IndexingService;
+import com.guanchedata.infrastructure.adapters.web.IndexingService;
 import com.guanchedata.infrastructure.ports.RecoveryExecuter;
 
 import java.io.IOException;

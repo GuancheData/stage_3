@@ -1,4 +1,4 @@
-package com.guanchedata.infrastructure.adapters.apiservices;
+package com.guanchedata.infrastructure.adapters.web;
 
 import com.guanchedata.infrastructure.adapters.metadata.HazelcastMetadataStore;
 import com.guanchedata.infrastructure.ports.BookStore;

@@ -1,5 +1,6 @@
-package com.guanchedata.model;
+package com.guanchedata.infrastructure.adapters.hazelcast;
 
+import com.guanchedata.model.BookMetadata;
 import com.hazelcast.nio.serialization.compact.CompactReader;
 import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;

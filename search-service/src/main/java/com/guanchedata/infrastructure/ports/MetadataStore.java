@@ -5,6 +5,5 @@ import java.util.Map;
 import java.util.Set;
 
 public interface MetadataStore {
-    BookMetadata getMetadata(String bookId);
-    Map<Integer, BookMetadata> getMetadataBulk(Set<Integer> bookIds);
+    Map<Integer, BookMetadata> getMetadata(Set<Integer> bookIds);
 }

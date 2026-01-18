@@ -1,6 +1,6 @@
 package com.guanchedata.infrastructure.config;
 
-import com.guanchedata.infrastructure.adapters.apiservices.IndexingService;
+import com.guanchedata.infrastructure.adapters.web.IndexingService;
 import com.guanchedata.infrastructure.adapters.broker.ActiveMQMessageConsumer;
 import com.guanchedata.infrastructure.adapters.broker.RebuildMessageListener;
 import com.guanchedata.infrastructure.ports.MessageConsumer;

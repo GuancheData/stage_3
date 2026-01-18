@@ -8,6 +8,10 @@ import com.hazelcast.core.HazelcastInstance;
 
 public class HazelcastConfig {
 
+    public static final String INDEX_MAP = "inverted-index";
+    public static final String METADATA_MAP = "bookMetadata";
+    public static final String DATALAKE_MAP = "datalake";
+
     public HazelcastInstance initHazelcast(String clusterName) {
 
         Config config = new Config();
@@ -26,17 +30,17 @@ public class HazelcastConfig {
     }
 
     private void setMapConfig(Config config) {
-        MapConfig invertedIndexReplicaConfig = new MapConfig("inverted-index")
+        MapConfig invertedIndexReplicaConfig = new MapConfig(INDEX_MAP)
                 .setBackupCount(2)
                 .setAsyncBackupCount(1);
         config.addMapConfig(invertedIndexReplicaConfig);
 
-        MapConfig bookMetadataReplicaConfig = new MapConfig("bookMetadata")
+        MapConfig bookMetadataReplicaConfig = new MapConfig(METADATA_MAP)
                 .setBackupCount(2)
                 .setAsyncBackupCount(1);
         config.addMapConfig(bookMetadataReplicaConfig);
 
-        MapConfig datalakeReplicaConfig = new MapConfig("datalake")
+        MapConfig datalakeReplicaConfig = new MapConfig(DATALAKE_MAP)
                 .setBackupCount(2)
                 .setAsyncBackupCount(1);
         config.addMapConfig(datalakeReplicaConfig);

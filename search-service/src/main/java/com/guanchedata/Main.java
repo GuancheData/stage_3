@@ -1,37 +1,59 @@
 package com.guanchedata;
 
 import com.google.gson.Gson;
-import com.guanchedata.application.usecases.searchservice.SearchController;
-import com.guanchedata.infrastructure.adapters.apiservices.SearchService;
-import com.guanchedata.infrastructure.adapters.indexstore.HazelcastIndexStore;
-import com.guanchedata.infrastructure.adapters.metadata.HazelcastMetadataStore;
+import com.guanchedata.application.usecases.ContentSearchEngine;
+import com.guanchedata.infrastructure.adapters.web.SearchController;
+import com.guanchedata.application.usecases.FindBooks;
+import com.guanchedata.infrastructure.adapters.sorter.SortByFrequency;
+import com.guanchedata.infrastructure.adapters.sorter.SortById;
+import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastIndexStore;
+import com.guanchedata.infrastructure.adapters.hazelcast.HazelcastMetadataStore;
 import com.guanchedata.infrastructure.config.HazelcastConfig;
-import com.guanchedata.infrastructure.config.ServiceConfig;
+import com.guanchedata.infrastructure.ports.SortingStrategy;
 import com.hazelcast.core.HazelcastInstance;
 import io.javalin.Javalin;
 import io.javalin.json.JsonMapper;
 
 import java.lang.reflect.Type;
-import java.util.logging.Logger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
-    private static final Logger log = Logger.getLogger(Main.class.getName());
-
     public static void main(String[] args) {
-        ServiceConfig config = new ServiceConfig();
         HazelcastConfig hzConfig = new HazelcastConfig();
 
-        HazelcastInstance hazelcastInstance = hzConfig.initHazelcast(config.getClusterName());
+        HazelcastInstance hazelcastInstance = hzConfig.initHazelcast(System.getenv().getOrDefault("CLUSTER_NAME", "SearchEngine"));
 
         HazelcastIndexStore indexStore = new HazelcastIndexStore(hazelcastInstance);
         HazelcastMetadataStore metadataStore = new HazelcastMetadataStore(hazelcastInstance);
 
-        String sortingCriteria = System.getenv("SORTING_CRITERIA");
-        if (sortingCriteria == null || sortingCriteria.isEmpty()) {
-            sortingCriteria = "frequency";
-        }
+        Map<String, SortingStrategy> strategies = new HashMap<>();
+        strategies.put("frequency", new SortByFrequency());
+        strategies.put("id", new SortById());
 
-        SearchService searchService = new SearchService(indexStore, metadataStore, sortingCriteria);
+        ExecutorService searchExecutor = Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors() - 3
+        );
+
+        ContentSearchEngine engine = new ContentSearchEngine(indexStore, searchExecutor);
+
+        String sortingEnv = System.getenv("SORTING_CRITERIA");
+
+        if (sortingEnv == null) sortingEnv = "frequency";
+
+        SortingStrategy selectedStrategy = strategies.getOrDefault(
+                sortingEnv.toLowerCase(),
+                new SortByFrequency()
+        );
+
+        FindBooks search = new FindBooks(engine, metadataStore, selectedStrategy);
+
+        SearchController controller = new SearchController(search);
+
+        FindBooks searchService = new FindBooks(engine, metadataStore, selectedStrategy);
+
         SearchController searchController = new SearchController(searchService);
 
         Gson gson = new Gson();
@@ -48,11 +70,9 @@ public class Main {
                     return gson.fromJson(json, targetType);
                 }
             });
-        }).start(config.getServicePort());
+        }).start(7003);
 
         app.get("/search", searchController::search);
         app.get("/health", searchController::health);
-
-        log.info("Search Service running on port " + config.getServicePort() + " with sorting: " + sortingCriteria + "\n");
     }
 }

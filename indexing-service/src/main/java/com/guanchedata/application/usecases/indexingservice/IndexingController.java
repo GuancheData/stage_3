@@ -1,7 +1,7 @@
 package com.guanchedata.application.usecases.indexingservice;
 
 import com.google.gson.Gson;
-import com.guanchedata.infrastructure.adapters.apiservices.IndexingService;
+import com.guanchedata.infrastructure.adapters.web.IndexingService;
 import com.guanchedata.infrastructure.adapters.broker.ActiveMQIngestionControlPublisher;
 import com.guanchedata.infrastructure.adapters.recovery.ReindexingExecutor;
 import com.guanchedata.model.RebuildCommand;
