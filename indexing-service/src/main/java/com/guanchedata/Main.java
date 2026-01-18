@@ -1,8 +1,8 @@
 package com.guanchedata;
 
 import com.guanchedata.application.usecases.indexingservice.IndexingController;
+import com.guanchedata.infrastructure.adapters.recovery.CoordinateRebuild;
 import com.guanchedata.infrastructure.adapters.tokenizer.JsonStopWordsLoader;
-import com.guanchedata.infrastructure.adapters.tokenizer.StopWordsLoader;
 import com.guanchedata.infrastructure.adapters.web.HazelcastBookStore;
 import com.guanchedata.infrastructure.adapters.broker.RebuildMessageListener;
 import com.guanchedata.infrastructure.adapters.indexstore.HazelcastIndexStore;
@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 
 public class Main {
-    private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
         ServiceConfig config = new ServiceConfig();
@@ -43,13 +42,7 @@ public class Main {
         TextTokenizer tokenizer = new TextTokenizer(stopWordsLoader.load());
         TermFrequencyAnalyzer analyzer = new TermFrequencyAnalyzer(tokenizer);
 
-        IndexBook indexBook = new IndexBook(
-                bookStore,
-                indexStore,
-                metadataStore,
-                statusStore,
-                analyzer
-        );
+        IndexBook indexBook = new IndexBook(bookStore, indexStore, metadataStore, statusStore, analyzer);
 
         InvertedIndexRecovery recovery = new InvertedIndexRecovery(args[0], indexBook, bookStore);
         IngestionQueueManager queueManager = new IngestionQueueManager(hz);
@@ -63,8 +56,9 @@ public class Main {
         MessageBrokerConfig brokerConfig = new MessageBrokerConfig();
         MessageConsumer messageConsumer = brokerConfig.createConsumer(config.getBrokerUrl(), indexBook, rebuildListener);
 
-        IndexingController controller = new IndexingController(indexBook, reindexingExecutor, config.getBrokerUrl(), hz);
+        CoordinateRebuild rebuildUseCase = new CoordinateRebuild(hz, config.getBrokerUrl());
 
+        IndexingController controller = new IndexingController(indexBook, rebuildUseCase);
         Javalin app = Javalin.create(c -> {
             c.http.defaultContentType = "application/json";
         }).start(config.getPort());
