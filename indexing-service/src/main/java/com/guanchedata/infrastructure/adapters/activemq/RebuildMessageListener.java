@@ -48,7 +48,7 @@ public class RebuildMessageListener {
                 consumer.setMessageListener(this::onMessage);
 
                 log.info("Rebuild listener active on topic: {}", REBUILD_TOPIC);
-                Thread.currentThread().join(); // Mantener el hilo vivo
+                Thread.currentThread().join();
             } catch (Exception e) {
                 log.error("Rebuild listener error, retrying in 5s...", e);
                 sleep(5000);
