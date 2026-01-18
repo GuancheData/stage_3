@@ -1,6 +1,8 @@
 package com.guanchedata;
 
 import com.guanchedata.application.usecases.indexingservice.IndexingController;
+import com.guanchedata.infrastructure.adapters.tokenizer.JsonStopWordsLoader;
+import com.guanchedata.infrastructure.adapters.tokenizer.StopWordsLoader;
 import com.guanchedata.infrastructure.adapters.web.IndexingService;
 import com.guanchedata.infrastructure.adapters.bookstore.HazelcastBookStore;
 import com.guanchedata.infrastructure.adapters.broker.RebuildMessageListener;
@@ -32,7 +34,8 @@ public class Main {
 
         HazelcastIndexStore indexStore = new HazelcastIndexStore(hazelcastInstance);
         HazelcastBookStore bookStore = new HazelcastBookStore(hazelcastInstance);
-        TextTokenizer tokenizer = new TextTokenizer();
+        StopWordsLoader stopWordsLoader = new JsonStopWordsLoader();
+        TextTokenizer tokenizer = new TextTokenizer(stopWordsLoader.load());
         HazelcastMetadataStore hazelcastMetadataStore = new HazelcastMetadataStore(hazelcastInstance, new MetadataParser());
 
         IndexingService indexingService = new IndexingService(indexStore, tokenizer, bookStore, hazelcastMetadataStore, hazelcastInstance);
