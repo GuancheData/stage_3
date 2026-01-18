@@ -66,7 +66,6 @@ public class HazelcastDatalakeListener {
             return;
         }
 
-        System.out.println("Node " + myNodeId + " replicating book:  " + bookId);
         saveRetrievedBook(bookId);
 
         replicatedNodesMap.lock(bookId);
@@ -98,10 +97,5 @@ public class HazelcastDatalakeListener {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void stop() {
-        this.active = false;
-        this.executorService.shutdownNow();
     }
 }
