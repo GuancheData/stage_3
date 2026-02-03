@@ -241,7 +241,7 @@ The `/benchmarks` directory also contains datasets, logs, and previous benchmark
 
 ## Demonstration Video
 
-👉 [[Stage 3] Search Engine Project - GuancheData (ULPGC)](https://youtu.be/tb8FYEy7YjY)
+👉 [[Stage 3] Search Engine Project - GuancheData (ULPGC)](https://www.youtube.com/watch?v=RHMDEk85xtI)
 
 The video demonstrates system deployment, real-time ingestion and search operations, horizontal
 scaling under load, and automatic recovery after simulated failures.
